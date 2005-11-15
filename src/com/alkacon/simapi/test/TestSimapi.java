@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2005/11/15 14:04:02 $
- * Version: $Revision: 1.2 $
+ * Date   : $Date: 2005/11/15 15:42:57 $
+ * Version: $Revision: 1.3 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -107,9 +107,9 @@ public class TestSimapi extends VisualTestCase {
         long loadTime = System.currentTimeMillis() - startTime;
         startTime = System.currentTimeMillis();
 
-        img1 = simapi.resize(img1, 100, 100, Color.WHITE, Simapi.POS_CENTER);
-        img2 = simapi.resize(img2, 100, 100, Color.WHITE, Simapi.POS_CENTER);
-        img3 = simapi.resize(img3, 100, 100, Color.WHITE, Simapi.POS_CENTER);
+        img1 = simapi.resize(img1, 100, 100, Color.RED, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 100, 100, Color.RED, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 100, 100, Color.RED, Simapi.POS_CENTER);
         
         long scaleTime = System.currentTimeMillis() - startTime;
 

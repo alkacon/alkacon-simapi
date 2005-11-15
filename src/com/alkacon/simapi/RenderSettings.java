@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/RenderSettings.java,v $
- * Date   : $Date: 2005/11/15 14:04:02 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2005/11/15 15:42:57 $
+ * Version: $Revision: 1.2 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -82,7 +82,7 @@ public class RenderSettings {
         switch (baseMode) {
             case Simapi.RENDER_SPEED:
                 m_hints = HINTS_SPEED;
-                m_compressionQuality = 0.3f;
+                m_compressionQuality = 0.35f;
                 break;
             case Simapi.RENDER_MEDIUM:
                 m_hints = HINTS_MEDIUM;
