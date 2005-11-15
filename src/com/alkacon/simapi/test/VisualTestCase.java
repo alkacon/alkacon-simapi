@@ -53,6 +53,10 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -120,12 +124,19 @@ public class VisualTestCase extends TestCase {
             m_curr = curr;
         }
 
+        /**
+         * Returns true if the user clicked "Yes", or false if the user clicked "No".<p>
+         * 
+         * @return true if the user clicked "Yes", or false if the user clicked "No"
+         */
+        public boolean isOk() {
+
+            return !event.getActionCommand().equals("No");
+        }
+
         public void run() {
 
             m_jf.dispose();
-            if (event.getActionCommand().equals("No")) {
-                fail("Failed : " + m_message);
-            }
             m_curr.interrupt();
         }
 
@@ -151,6 +162,32 @@ public class VisualTestCase extends TestCase {
     public VisualTestCase(String params) {
 
         super(params);
+    }
+
+    /**
+     * Reads a file from the RFS and returns the file content.<p> 
+     * 
+     * @param file the file to read 
+     * @return the read file content
+     * 
+     * @throws IOException in case of file access errors
+     */
+    public static byte[] readFile(File file) throws IOException {
+
+        // create input and output stream
+        FileInputStream in = new FileInputStream(file);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        // read the file content
+        int c;
+        while ((c = in.read()) != -1) {
+            out.write(c);
+        }
+
+        in.close();
+        out.close();
+
+        return out.toByteArray();
     }
 
     /**
@@ -222,6 +259,9 @@ public class VisualTestCase extends TestCase {
                 // continue the thread
                 wait = false;
             }
+        }
+        if (!pa.isOk()) {
+            fail("Failed : " + m_message);
         }
     }
 }

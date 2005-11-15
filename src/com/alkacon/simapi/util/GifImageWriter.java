@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/GifImageWriter.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2005/11/15 14:04:02 $
+ * Version: $Revision: 1.2 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -31,9 +31,8 @@
 
 package com.alkacon.simapi.util;
 
-import com.alkacon.simapi.SimapiFactory;
-
 import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 
@@ -117,15 +116,15 @@ public class GifImageWriter extends ImageWriter {
         if (ri instanceof BufferedImage) {
 
             BufferedImage bi = (BufferedImage)ri;
-            try {
-                GifEncoder encoder = new GifEncoder(bi);
-                encoder.write(ios);
-            } catch (IOException e) {
-                // reduce color size to 256 and try again
-                BufferedImage reduced = SimapiFactory.getInstace().reduceColors(bi, 256, false);
-                GifEncoder encoder = new GifEncoder(reduced);
-                encoder.write(ios);
+            BufferedImage indexed;
+            if (!(bi.getColorModel() instanceof IndexColorModel)) {
+                indexed = Quantize.process(bi, 256, true);
+            } else {
+                indexed = bi;
             }
+            GifAcmeEncoder encoder = new GifAcmeEncoder(indexed);
+            encoder.write(ios);
+
         } else {
 
             throw new IOException("Image not of type BufferedImage");

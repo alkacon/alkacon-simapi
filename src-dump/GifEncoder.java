@@ -1,6 +1,6 @@
 /*
- * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/Attic/GifEncoder.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
+ * File   : $Source: /alkacon/cvs/AlkaconSimapi/src-dump/GifEncoder.java,v $
+ * Date   : $Date: 2005/11/15 14:04:02 $
  * Version: $Revision: 1.1 $
  *
  * This library is part of OpenCms -

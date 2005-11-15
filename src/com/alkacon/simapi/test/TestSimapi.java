@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2005/11/15 14:04:02 $
+ * Version: $Revision: 1.2 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -31,8 +31,8 @@
 
 package com.alkacon.simapi.test;
 
+import com.alkacon.simapi.RenderSettings;
 import com.alkacon.simapi.Simapi;
-import com.alkacon.simapi.SimapiFactory;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -64,14 +64,16 @@ public class TestSimapi extends VisualTestCase {
         TestSuite suite = new TestSuite();
         suite.setName(TestSimapi.class.getName());
 
+        suite.addTest(new TestSimapi("testScaleTransparent"));
+        suite.addTest(new TestSimapi("testResizeScale"));
+        suite.addTest(new TestSimapi("testResizeScaleFill"));
+        suite.addTest(new TestSimapi("testSlowScalingIssue"));
         suite.addTest(new TestSimapi("testWriteJpegQuality"));
         suite.addTest(new TestSimapi("testResizeScaleFillSmall"));
-        suite.addTest(new TestSimapi("testResizeScaleFill"));
         suite.addTest(new TestSimapi("testCrop"));
         suite.addTest(new TestSimapi("testResizeCrop"));
         suite.addTest(new TestSimapi("testWriteGif"));
         suite.addTest(new TestSimapi("testWriteJpegAndPng"));
-        suite.addTest(new TestSimapi("testResizeScale"));
         suite.addTest(new TestSimapi("testRead"));
 
         return suite;
@@ -87,7 +89,120 @@ public class TestSimapi extends VisualTestCase {
         super(params);
     }
 
+    /**
+     * Tests "slow scaling" issue encountered with some JPEG's.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testSlowScalingIssue() throws Exception {
 
+        Simapi simapi = new Simapi();
+
+        long startTime = System.currentTimeMillis();
+        
+        BufferedImage img1 = Simapi.read(getClass().getResource("slow_scale01.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("slow_scale02.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("slow_scale03.jpg"));
+        
+        long loadTime = System.currentTimeMillis() - startTime;
+        startTime = System.currentTimeMillis();
+
+        img1 = simapi.resize(img1, 100, 100, Color.WHITE, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 100, 100, Color.WHITE, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 100, 100, Color.WHITE, Simapi.POS_CENTER);
+        
+        long scaleTime = System.currentTimeMillis() - startTime;
+
+        checkImage(new BufferedImage[] {img1, img2, img3}, "Load time (msec): " + loadTime + " / Scale time (msec): " + scaleTime + ". Is this ok?");
+        
+        File baseDir = new File(getClass().getResource("slow_scale01.jpg").getPath()).getParentFile();
+        
+        simapi.write(img1, new File(baseDir, "w_slow_scale01.jpg"), Simapi.TYPE_JPEG);
+        simapi.write(img2, new File(baseDir, "w_slow_scale02.jpg"), Simapi.TYPE_JPEG);
+        simapi.write(img3, new File(baseDir, "w_slow_scale03.jpg"), Simapi.TYPE_JPEG);
+        
+        img1 = Simapi.read(getClass().getResource("w_slow_scale01.jpg"));
+        img2 = Simapi.read(getClass().getResource("w_slow_scale02.jpg"));
+        img3 = Simapi.read(getClass().getResource("w_slow_scale03.jpg"));
+        
+        checkImage(new BufferedImage[] {img1, img2, img3}, "Is default low quality OK for thumbnails?");
+    }
+    
+    /**
+     * Tests resizing a transparent image.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testScaleTransparent() throws Exception {
+
+        Simapi simapi = new Simapi();
+        BufferedImage result;
+        
+        BufferedImage imgBull = Simapi.read(getClass().getResource("bull.jpg"));
+        result = simapi.resize(imgBull, 500, 500, Simapi.COLOR_TRANSPARENT, Simapi.POS_CENTER, true);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (reduced) to 500x500 pixel with WHITE background fill?");
+        assertEquals(500, result.getWidth());
+        assertEquals(500, result.getHeight());
+        
+        File input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        byte[] imgBytes = readFile(input);        
+        BufferedImage img1 = Simapi.read(imgBytes);
+        
+        result = simapi.resize(img1, 75, 75, true);
+        File destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved1.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        BufferedImage read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 75x27 pixel and saved as GIF with transparent background ok?");
+        assertEquals(75, read.getWidth());
+        assertEquals(27, read.getHeight()); // aspect ratio kept intact
+        
+        result = simapi.resize(img1, 75, 75, false);
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved2.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 75x75 pixel and saved as GIF with transparent background ok?");
+        assertEquals(75, read.getWidth());
+        assertEquals(75, read.getHeight());
+        
+        result = simapi.resize(img1, 300, 300, true);
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved3.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 300x108 pixel and saved as GIF with transparent background ok?");
+        assertEquals(300, read.getWidth());
+        assertEquals(108, read.getHeight()); // aspect ratio kept intact
+        
+        result = simapi.resize(img1, 300, 300, Color.RED, Simapi.POS_CENTER);
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved4.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 300x300 pixel and saved as GIF with RED fill color?");
+        assertEquals(300, read.getWidth());
+        assertEquals(300, read.getHeight());
+        
+        result = simapi.resize(img1, 300, 300, Simapi.COLOR_TRANSPARENT, Simapi.POS_CENTER);
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved5.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 300x300 pixel and saved as GIF with transparent background ok (NO fill color)?");
+        assertEquals(300, read.getWidth());
+        assertEquals(300, read.getHeight());
+        
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved5.png");
+        simapi.write(result, destination, Simapi.TYPE_PNG);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 300x300 pixel and saved as PNG with transparent background ok (NO fill color)?");
+        assertEquals(300, read.getWidth());
+        assertEquals(300, read.getHeight());
+        
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved5.jpg");
+        simapi.write(result, destination, Simapi.TYPE_JPEG);
+        read = Simapi.read(destination);        
+        checkImage(new BufferedImage[] {img1, read}, "Has it been scaled to 300x300 pixel and saved as JPEG with transparent background replaced?");
+        assertEquals(300, read.getWidth());
+        assertEquals(300, read.getHeight());
+    }
+    
     /**
      * Tests writing an image as JPEG with different quality settings.<p>
      * 
@@ -95,8 +210,6 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testWriteJpegQuality() throws Exception {
         
-        Simapi imaging = SimapiFactory.getInstace();
-
         BufferedImage read;
         File input;
         File destination;
@@ -150,21 +263,26 @@ public class TestSimapi extends VisualTestCase {
          * http://mediachest.sourceforge.net/mediautil/
          */
 
-        read = imaging.read(input);
-        read = imaging.resize(read, 800, 600, false);
+        RenderSettings rs = new RenderSettings(Simapi.RENDER_QUALITY);
+        Simapi simapi = new Simapi(rs);
+
+        read = Simapi.read(input);
+        read = simapi.resize(read, 800, 600, false);
         checkImage(new BufferedImage[] {read}, "Has it been read?");
         
         input = new File(getClass().getResource("screen1.png").getPath());
-        BufferedImage img1 = imaging.read(input);
+        BufferedImage img1 = Simapi.read(input);
         
+        rs.setCompressionQuality(0.3f);
         destination = new File(input.getParentFile(), "saved_q_low.jpg");
-        imaging.write(img1, destination, "JPEG", 0.3f);
-        read = imaging.read(destination);
+        simapi.write(img1, destination, Simapi.TYPE_JPEG);
+        read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as JPEG in a _low_ quality version?");
         
+        rs.setCompressionQuality(0.95f);
         destination = new File(input.getParentFile(), "saved_q_high.jpg");
-        imaging.write(img1, destination, "JPEG", 0.8f);
-        read = imaging.read(destination);
+        simapi.write(img1, destination, Simapi.TYPE_JPEG);
+        read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as JPEG in a _high_ quality version?");
     }
     
@@ -175,7 +293,7 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testResizeScaleFillSmall() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         File input;
         BufferedImage img1;
@@ -184,21 +302,21 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage result3;
 
         input = new File(getClass().getResource("opencms.gif").getPath());
-        img1 = imaging.read(input);
+        img1 = Simapi.read(input);
 
-        result1 = imaging.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
-        result2 = imaging.resize(img1, 300, 300, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
-        result3 = imaging.resize(img1, 300, 300, Color.GREEN, Simapi.POS_STRAIGHT_UP);
+        result1 = simapi.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
+        result2 = simapi.resize(img1, 300, 300, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
+        result3 = simapi.resize(img1, 300, 300, Color.GREEN, Simapi.POS_STRAIGHT_UP);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed down, right, up");
 
         input = new File(getClass().getResource("opencms.gif").getPath());
-        img1 = imaging.read(input);
+        img1 = Simapi.read(input);
 
-        result1 = imaging.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_CENTER);
-        result2 = imaging.resize(img1, 300, 300, Color.YELLOW, Simapi.POS_DOWN_LEFT);
-        result3 = imaging.resize(img1, 300, 300, Color.GREEN, Simapi.POS_UP_RIGHT);
+        result1 = simapi.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_CENTER);
+        result2 = simapi.resize(img1, 300, 300, Color.YELLOW, Simapi.POS_DOWN_LEFT);
+        result3 = simapi.resize(img1, 300, 300, Color.GREEN, Simapi.POS_UP_RIGHT);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed center, down left, up right");
@@ -211,7 +329,7 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testResizeScaleFill() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         File input;
         BufferedImage img1;
@@ -220,21 +338,21 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage result3;
 
         input = new File(getClass().getResource("screen1.png").getPath());
-        img1 = imaging.read(input);
+        img1 = Simapi.read(input);
 
-        result1 = imaging.resize(img1, 250, 250, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
-        result2 = imaging.resize(img1, 350, 250, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
-        result3 = imaging.resize(img1, 250, 250, Color.GREEN, Simapi.POS_STRAIGHT_UP);
+        result1 = simapi.resize(img1, 250, 250, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
+        result2 = simapi.resize(img1, 350, 250, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
+        result3 = simapi.resize(img1, 250, 250, Color.GREEN, Simapi.POS_STRAIGHT_UP);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed down, right, up");
 
         input = new File(getClass().getResource("opencms.gif").getPath());
-        img1 = imaging.read(input);
+        img1 = Simapi.read(input);
 
-        result1 = imaging.resize(img1, 150, 150, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
-        result2 = imaging.resize(img1, 250, 50, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
-        result3 = imaging.resize(img1, 150, 150, Color.GREEN, Simapi.POS_STRAIGHT_UP);
+        result1 = simapi.resize(img1, 150, 150, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
+        result2 = simapi.resize(img1, 250, 50, Color.YELLOW, Simapi.POS_STRAIGHT_RIGHT);
+        result3 = simapi.resize(img1, 150, 150, Color.GREEN, Simapi.POS_STRAIGHT_UP);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed down, right, up");
@@ -247,22 +365,22 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testResizeCrop() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         File input = new File(getClass().getResource("opencms.gif").getPath());
-        BufferedImage img1 = imaging.read(input);
-        BufferedImage result1 = imaging.resize(img1, 200, 100, Simapi.POS_CENTER);
-        BufferedImage result2 = imaging.resize(img1, 200, 100, Simapi.POS_STRAIGHT_LEFT);
-        BufferedImage result3 = imaging.resize(img1, 200, 100, Simapi.POS_STRAIGHT_RIGHT);
+        BufferedImage img1 = Simapi.read(input);
+        BufferedImage result1 = simapi.resize(img1, 200, 100, Simapi.POS_CENTER);
+        BufferedImage result2 = simapi.resize(img1, 200, 100, Simapi.POS_STRAIGHT_LEFT);
+        BufferedImage result3 = simapi.resize(img1, 200, 100, Simapi.POS_STRAIGHT_RIGHT);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be resized and cropped at center, left, right");
 
         input = new File(getClass().getResource("screen1.png").getPath());
-        img1 = imaging.read(input);
-        result1 = imaging.resize(img1, 400, 200, Simapi.POS_CENTER);
-        result2 = imaging.resize(img1, 400, 200, Simapi.POS_STRAIGHT_UP);
-        result3 = imaging.resize(img1, 400, 200, Simapi.POS_STRAIGHT_DOWN);
+        img1 = Simapi.read(input);
+        result1 = simapi.resize(img1, 400, 200, Simapi.POS_CENTER);
+        result2 = simapi.resize(img1, 400, 200, Simapi.POS_STRAIGHT_UP);
+        result3 = simapi.resize(img1, 400, 200, Simapi.POS_STRAIGHT_DOWN);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be resized and cropped at center, up, down");
@@ -275,7 +393,7 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testCrop() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         File input;
         BufferedImage img1;
@@ -284,25 +402,25 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage result3;
 
         input = new File(getClass().getResource("screen1.png").getPath());
-        img1 = imaging.read(input);
+        img1 = Simapi.read(input);
 
-        result1 = imaging.crop(img1, 250, 250, Simapi.POS_STRAIGHT_LEFT);
-        result2 = imaging.crop(img1, 250, 250, Simapi.POS_CENTER);
-        result3 = imaging.crop(img1, 250, 250, Simapi.POS_STRAIGHT_RIGHT);
+        result1 = simapi.crop(img1, 250, 250, Simapi.POS_STRAIGHT_LEFT);
+        result2 = simapi.crop(img1, 250, 250, Simapi.POS_CENTER);
+        result3 = simapi.crop(img1, 250, 250, Simapi.POS_STRAIGHT_RIGHT);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be cropped MIDDLE at left, center right");
 
-        result1 = imaging.crop(img1, 250, 250, Simapi.POS_UP_LEFT);
-        result2 = imaging.crop(img1, 250, 250, Simapi.POS_STRAIGHT_UP);
-        result3 = imaging.crop(img1, 250, 250, Simapi.POS_UP_RIGHT);
+        result1 = simapi.crop(img1, 250, 250, Simapi.POS_UP_LEFT);
+        result2 = simapi.crop(img1, 250, 250, Simapi.POS_STRAIGHT_UP);
+        result3 = simapi.crop(img1, 250, 250, Simapi.POS_UP_RIGHT);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be cropped UP at left, center, right");
 
-        result1 = imaging.crop(img1, 250, 250, Simapi.POS_DOWN_LEFT);
-        result2 = imaging.crop(img1, 250, 250, Simapi.POS_STRAIGHT_DOWN);
-        result3 = imaging.crop(img1, 250, 250, Simapi.POS_DOWN_RIGHT);
+        result1 = simapi.crop(img1, 250, 250, Simapi.POS_DOWN_LEFT);
+        result2 = simapi.crop(img1, 250, 250, Simapi.POS_STRAIGHT_DOWN);
+        result3 = simapi.crop(img1, 250, 250, Simapi.POS_DOWN_RIGHT);
         checkImage(
             new BufferedImage[] {result1, result2, result3},
             "Images should be cropped DOWN at left, center, right");
@@ -315,10 +433,10 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testWriteGif() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         ImageIO.scanForPlugins();
-        Iterator gifWriters = ImageIO.getImageWritersByFormatName("GIF");
+        Iterator gifWriters = ImageIO.getImageWritersByFormatName(Simapi.TYPE_GIF);
         if (!gifWriters.hasNext()) {
             fail("No Java ImageIO writers for the GIF format are available.");
         }
@@ -329,13 +447,13 @@ public class TestSimapi extends VisualTestCase {
         File destination;
 
         input = new File(getClass().getResource("opencms.gif").getPath());
-        BufferedImage img1 = imaging.read(input);
-        result = imaging.resize(img1, 300, 150, true, true);
+        BufferedImage img1 = Simapi.read(input);
+        result = simapi.resize(img1, 300, 150, true, true);
 
         destination = new File(input.getParentFile(), "saved3.gif");
         System.out.println(destination.getAbsolutePath());
-        imaging.write(result, destination, "GIF");
-        read = imaging.read(destination);
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as GIF in a scaled version?");
     }
 
@@ -346,7 +464,7 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testWriteJpegAndPng() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         BufferedImage result;
         BufferedImage read;
@@ -354,21 +472,21 @@ public class TestSimapi extends VisualTestCase {
         File destination;
 
         input = new File(getClass().getResource("opencms.gif").getPath());
-        BufferedImage img1 = imaging.read(input);
-        result = imaging.resize(img1, 300, 150, true, true);
+        BufferedImage img1 = Simapi.read(input);
+        result = simapi.resize(img1, 300, 150, true, true);
         destination = new File(input.getParentFile(), "saved1.jpg");
         System.out.println(destination.getAbsolutePath());
-        imaging.write(result, destination, "JPEG");
-        read = imaging.read(destination);
+        simapi.write(result, destination, Simapi.TYPE_JPEG);
+        read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as JPEG in a scaled version?");
         
         input = new File(getClass().getResource("screen1.png").getPath());
-        BufferedImage img2 = imaging.read(input);
-        result = imaging.scale(img2, 0.8f);
+        BufferedImage img2 = Simapi.read(input);
+        result = simapi.scale(img2, 0.8f);
         destination = new File(input.getParentFile(), "saved2.png");
         System.out.println(destination.getAbsolutePath());
-        imaging.write(result, destination, "PNG");
-        read = imaging.read(destination);
+        simapi.write(result, destination, Simapi.TYPE_PNG);
+        read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img2, read}, "Has it been written to disk as PNG in a scaled version?");
     }
     
@@ -379,22 +497,65 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testResizeScale() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
+        Simapi simapi = new Simapi();
 
         BufferedImage result;
 
-        BufferedImage img1 = imaging.read(getClass().getResource("screen1.png"));
-        result = imaging.scale(img1, 0.75f);
+        BufferedImage imgBull = Simapi.read(getClass().getResource("bull.jpg"));
+        result = simapi.resize(imgBull, 150, 80, Color.RED, Simapi.POS_CENTER, true);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (reduced) to 150x80 pixel with RED background fill?");
+        assertEquals(150, result.getWidth());
+        assertEquals(80, result.getHeight());
+        
+        result = simapi.resize(imgBull, 450, 450, Color.RED, Simapi.POS_CENTER, true);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (enlarged) to 450x450 pixel WITH blowup and red background fill?");
+        assertEquals(450, result.getWidth());
+        assertEquals(450, result.getHeight());
+        
+        result = simapi.resize(imgBull, 450, 450, Color.RED, Simapi.POS_CENTER, false);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (enlarged) to 450x450 pixel WITHOUT blowup and red background fill?");
+        assertEquals(450, result.getWidth());
+        assertEquals(450, result.getHeight());
+        
+        result = simapi.resize(imgBull, 250, 250, Color.RED, Simapi.POS_CENTER, false);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (reduced) to 250x250 pixel WITHOUT blowup and red background fill?");
+        assertEquals(250, result.getWidth());
+        assertEquals(250, result.getHeight());
+        
+        result = simapi.resize(imgBull, 350, 450, false);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled to 350x450 pixel without keeping PROPORTIONS?");
+        assertEquals(350, result.getWidth());
+        assertEquals(450, result.getHeight());
+        
+        result = simapi.resize(imgBull, 350, 450, Simapi.POS_UP_RIGHT);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (enlarged) to 350x450 pixel with CROP up right?");
+        assertEquals(350, result.getWidth());
+        assertEquals(450, result.getHeight());
+        
+        result = simapi.resize(imgBull, 200, 250, Simapi.POS_UP_RIGHT);
+        checkImage(new BufferedImage[] {imgBull, result}, "Has it been scaled (reduced) to 200x250 pixel with CROP up right?");
+        assertEquals(200, result.getWidth());
+        assertEquals(250, result.getHeight());
+        
+        BufferedImage img1 = Simapi.read(getClass().getResource("screen1.png"));
+        result = simapi.scale(img1, 0.75f);
         checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 75%?");
-
-        BufferedImage img2 = imaging.read(getClass().getResource("opencms_text.jpg"));
-        result = imaging.resize(img2, 100, 50);
+        assertEquals((int)(img1.getWidth() * 0.75f), result.getWidth());
+        assertEquals((int)(img1.getHeight() * 0.75f), result.getHeight());
+        
+        BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
+        result = simapi.resize(img2, 100, 50);
+        
         checkImage(new BufferedImage[] {img2, result}, "Has it been resized to 100x50 pixel?");
-
-        BufferedImage img3 = imaging.read(getClass().getResource("alkacon.png"));
-        result = imaging.resize(img3, 400, 300, true);
+        assertEquals(100, result.getWidth());
+        assertEquals(50, result.getHeight());
+        
+        BufferedImage img3 = Simapi.read(getClass().getResource("alkacon.png"));
+        result = simapi.resize(img3, 400, 300, true);
 
         checkImage(new BufferedImage[] {img3, result}, "Has it been resized to 400x300 pixel with aspect intact?");
+        assertEquals(400, result.getWidth());
+        assertEquals(254, result.getHeight()); // aspect ratio height is 254
     }
 
     /**
@@ -404,11 +565,9 @@ public class TestSimapi extends VisualTestCase {
      */
     public void testRead() throws Exception {
 
-        Simapi imaging = SimapiFactory.getInstace();
-
-        BufferedImage img1 = imaging.read(getClass().getResource("alkacon.png"));
-        BufferedImage img2 = imaging.read(getClass().getResource("opencms_text.jpg"));
-        BufferedImage img3 = imaging.read(getClass().getResource("opencms.gif"));
+        BufferedImage img1 = Simapi.read(getClass().getResource("alkacon.png"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("opencms.gif"));
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Do you see 3 images?");
     }

@@ -1,7 +1,7 @@
-/* 
+/*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2005/11/15 14:04:02 $
+ * Version: $Revision: 1.2 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -31,93 +31,127 @@
 
 package com.alkacon.simapi;
 
+import com.alkacon.simapi.util.GifImageWriterSpi;
+import com.alkacon.simapi.util.Quantize;
+
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Transparency;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Iterator;
+
+import javax.imageio.IIOException;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.spi.IIORegistry;
+import javax.imageio.stream.ImageOutputStream;
 
 /**
- * Simple Image API (Simapi) that provides convenient access to commonly used imaging operations.<p>
+ * <b>SIM</b>ple <b>IM</b>age <b>API</b> (SIMAPI) that provides convenient access to commonly used imaging operations.<p>
  * 
  * @author Alexander Kandzior
  */
-public interface Simapi {
+public class Simapi {
 
-    /** Position indicator: Center. */
-    int POS_CENTER = 0;
+    /** Constant to identify a transparent background fill color. */
+    public static final Color COLOR_TRANSPARENT = new Color(0, 0, 0, 255);
+
+    /** Position indicator: Center (default). */
+    public static final int POS_CENTER = 0;
 
     /** Position indicator: Down left. */
-    int POS_DOWN_LEFT = 1;
+    public static final int POS_DOWN_LEFT = 1;
 
     /** Position indicator: Down right. */
-    int POS_DOWN_RIGHT = 2;
+    public static final int POS_DOWN_RIGHT = 2;
 
     /** Position indicator: Straight down. */
-    int POS_STRAIGHT_DOWN = 3;
+    public static final int POS_STRAIGHT_DOWN = 3;
 
     /** Position indicator: Straight left. */
-    int POS_STRAIGHT_LEFT = 4;
+    public static final int POS_STRAIGHT_LEFT = 4;
 
     /** Position indicator: Straight right. */
-    int POS_STRAIGHT_RIGHT = 5;
+    public static final int POS_STRAIGHT_RIGHT = 5;
 
     /** Position indicator: Straight up. */
-    int POS_STRAIGHT_UP = 6;
+    public static final int POS_STRAIGHT_UP = 6;
 
     /** Position indicator: Up left. */
-    int POS_UP_LEFT = 7;
+    public static final int POS_UP_LEFT = 7;
 
     /** Position indicator: Up right. */
-    int POS_UP_RIGHT = 8;
+    public static final int POS_UP_RIGHT = 8;
+
+    /** Indicates to use the <code>MEDIUM</code> render settigns. */
+    public static final int RENDER_MEDIUM = 1;
+
+    /** Indicates to use the <code>QUALITY</code> render settigns (default). */
+    public static final int RENDER_QUALITY = 0;
+
+    /** Indicates to use the <code>SPEED</code> render settigns. */
+    public static final int RENDER_SPEED = 2;
+
+    /** Constant to identify the <code>BMP</code> image type. */
+    public static final String TYPE_BMP = "BMP";
+
+    /** Constant to identify the <code>GIF</code> image type. */
+    public static final String TYPE_GIF = "GIF";
+
+    /** Constant to identify the <code>JPEG</code> image type. */
+    public static final String TYPE_JPEG = "JPEG";
+
+    /** Constant to identify the <code>PNG</code> image type. */
+    public static final String TYPE_PNG = "PNG";
+
+    /** Constant to identify the <code>PNM</code> image type. */
+    public static final String TYPE_PNM = "PNM";
+
+    /** Constant to identify the <code>TIFF</code> image type. */
+    public static final String TYPE_TIFF = "TIFF";
+
+    /** Rendering settings for the image generation / scaling / saving. */
+    private RenderSettings m_renderSettings;
 
     /**
-     * Resizes an image according to the width and height specified,
-     * keeping the aspect ratio if required.<p>
-     * 
-     * If set to <code>true</code>, the bestfit option will keep the image within the dimensions specified
-     * without losing the aspect ratio.<p>
-     * 
-     * If set to <code>false</code>, the blowup option will not enlarge an image that is already smaller 
-     * then the sepcified target dimensions.<p>
-     * 
-     * @param image the image to resize
-     * @param width the width of the target image
-     * @param height the height of the target image
-     * @param bestfit if true, the aspect ratio of the image will be kept
-     * @param blowup if false, smaller images will not be enlarged to the target dimensions
-     * 
-     * @return the transformed image
+     * Creates a new simapi instance using the default render settings ({@link #RENDER_QUALITY}).<p>     *
      */
-    public BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit, boolean blowup);
+    public Simapi() {
+
+        this(new RenderSettings(RENDER_QUALITY));
+    }
 
     /**
-     * Crops an image according to the width and height specified.<p>
+     * Creates a new simapi instance with the sepcified render settings.<p>
      * 
-     * Use the constants <code>{@link #POS_CENTER}</code> etc. to indicate the crop position.<p>
-     * 
-     * @param image the image to crop
-     * @param width the width of the target image
-     * @param height the height of the target image
-     * @param cropPosition the position to crop the image at
-     * 
-     * @return the transformed image
+     * @param renderSettings the render settings to use
      */
-    BufferedImage crop(BufferedImage image, int width, int height, int cropPosition);
+    public Simapi(RenderSettings renderSettings) {
+
+        m_renderSettings = renderSettings;
+    }
 
     /**
-     * Returns the byte contents of the given image.<p>
-     * 
-     * @param image the image to get the byte contents for
-     * @param type the type of the image to get the byte contents for
-     * 
-     * @return the byte contents of the given image
-     * 
-     * @throws IOException in case the image could not be converted to bytes 
+     * Register the GIF encoder.<p>
      */
-    byte[] getBytes(BufferedImage image, String type) throws IOException;
+    static {
+
+        // register the GIF encoder with the Java ImageIO registry
+        IIORegistry.getDefaultInstance().registerServiceProvider(new GifImageWriterSpi());
+    }
 
     /**
      * Returns the image type from the given file name based on the file suffix (extension)
@@ -136,7 +170,48 @@ public interface Simapi {
      * @return the image type from the given file name based on the suffix and the available image writers, 
      *      or null if no image writer is available for the format 
      */
-    String getImageType(String filename);
+    public static String getImageType(String filename) {
+
+        if (filename == null) {
+            return null;
+        }
+
+        int pos = filename.lastIndexOf('.');
+        String type;
+        if (pos < 0) {
+            type = filename;
+        } else {
+            if (pos < filename.length()) {
+                pos++;
+            }
+            type = filename.substring(pos);
+        }
+        type = type.trim().toUpperCase();
+
+        if (type.equals(Simapi.TYPE_JPEG) || type.equals("JPG")) {
+            type = Simapi.TYPE_JPEG;
+        } else if (type.equals(Simapi.TYPE_GIF)) {
+            type = Simapi.TYPE_GIF;
+        } else if (type.equals(Simapi.TYPE_PNG)) {
+            type = Simapi.TYPE_PNG;
+        } else if (type.equals(Simapi.TYPE_TIFF) || type.equals("TIF")) {
+            type = Simapi.TYPE_TIFF;
+        } else if (type.equals(Simapi.TYPE_BMP)) {
+            type = Simapi.TYPE_BMP;
+        } else if (type.equals(Simapi.TYPE_PNM) || type.equals("PBM") || type.equals("PGM") || type.equals("PPM")) {
+            type = Simapi.TYPE_PNM;
+        }
+
+        // check if a writer for the image name can be found
+        Iterator iter = ImageIO.getImageWritersByFormatName(type);
+        if (iter.hasNext()) {
+            // type can be resolved
+            return type;
+        }
+
+        // type is unknown
+        return null;
+    }
 
     /**
      * Loads an image from a byte array
@@ -147,10 +222,14 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be loaded 
      */
-    BufferedImage read(byte[] source) throws IOException;
+    public static BufferedImage read(byte[] source) throws IOException {
+
+        ByteArrayInputStream in = new ByteArrayInputStream(source);
+        return read(in);
+    }
 
     /**
-     *  Loads an image from a local file.<p>
+     * Loads an image from a local file.<p>
      * 
      * @param source the file to read the input image from
      * 
@@ -158,7 +237,10 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be loaded 
      */
-    BufferedImage read(File source) throws IOException;
+    public static BufferedImage read(File source) throws IOException {
+
+        return ImageIO.read(source);
+    }
 
     /**
      * Loads an image from an InputStream.<p>
@@ -167,24 +249,29 @@ public interface Simapi {
      * 
      * @return the loaded image
      * 
-     * @throws IOException in case the image could not be loaded 
-     * 
+     * @throws IOException in case the image could not be loaded
      */
-    BufferedImage read(InputStream source) throws IOException;
+    public static BufferedImage read(InputStream source) throws IOException {
+
+        return ImageIO.read(source);
+    }
 
     /**
-     * Loads an image from a file whose path is supplied as a String
+     * Loads an image from a local file whose path is supplied as a String
      * 
-     * @param source the path to read to input image from
+     * @param source the path to the local file to read the input image from
      * 
      * @return the loaded image
      * 
      * @throws IOException in case the image could not be loaded 
      */
-    BufferedImage read(String source) throws IOException;
+    public static BufferedImage read(String source) throws IOException {
+
+        return read(new File(source));
+    }
 
     /**
-     *  Loads an image from a  URL.<p>
+     * Loads an image from a URL.<p>
      * 
      * @param source the URL to read the input image from
      * 
@@ -192,20 +279,107 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be loaded      
      */
-    BufferedImage read(URL source) throws IOException;
+    public static BufferedImage read(URL source) throws IOException {
+
+        return ImageIO.read(source);
+    }
 
     /**
-     * Reduces the colors in the given image to the given maximum number.<p>
+     * Crops an image according to the width and height specified.<p>
+     * 
+     * Use the constants <code>{@link Simapi#POS_CENTER}</code> etc. to indicate the crop position.<p>
+     * 
+     * @param image the image to crop
+     * @param width the width of the target image
+     * @param height the height of the target image
+     * @param cropPosition the position to crop the image at
+     * 
+     * @return the transformed image
+     */
+    public BufferedImage crop(BufferedImage image, int width, int height, int cropPosition) {
+
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        if ((imageWidth == width) && (imageHeight == height)) {
+            // no resize required
+            return image;
+        }
+
+        int x;
+        int y;
+        switch (cropPosition) {
+            case Simapi.POS_DOWN_LEFT:
+                x = 0;
+                y = imageHeight - height;
+                break;
+            case Simapi.POS_DOWN_RIGHT:
+                x = imageWidth - width;
+                y = imageHeight - height;
+                break;
+            case Simapi.POS_STRAIGHT_DOWN:
+                x = (imageWidth - width) / 2;
+                y = imageHeight - height;
+                break;
+            case Simapi.POS_STRAIGHT_LEFT:
+                x = 0;
+                y = (imageHeight - height) / 2;
+                break;
+            case Simapi.POS_STRAIGHT_RIGHT:
+                x = imageWidth - width;
+                y = (imageHeight - height) / 2;
+                break;
+            case Simapi.POS_STRAIGHT_UP:
+                x = (imageWidth - width) / 2;
+                y = 0;
+                break;
+            case Simapi.POS_UP_LEFT:
+                x = 0;
+                y = 0;
+                break;
+            case Simapi.POS_UP_RIGHT:
+                x = imageWidth - width;
+                y = 0;
+                break;
+            default:
+                // crop center
+                x = (imageWidth - width) / 2;
+                y = (imageHeight - height) / 2;
+        }
+
+        // return the result
+        return image.getSubimage(x, y, width, height);
+    }
+
+    /**
+     * Returns the byte contents of the given image.<p>
+     * 
+     * @param image the image to get the byte contents for
+     * @param type the type of the image to get the byte contents for
+     * 
+     * @return the byte contents of the given image
+     * 
+     * @throws IOException in case the image could not be converted to bytes 
+     */
+    public byte[] getBytes(BufferedImage image, String type) throws IOException {
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+        write(image, out, type);
+        return out.toByteArray();
+    }
+
+    /**
+     * Reduces the colors in the given image to the given maximum color number.<p>
      *  
      * @param image the image to reduce the colors from
-     * @param maxColors the maximum number of allowed colors in the output image
+     * @param maxColors the maximum number of allowed colors in the output image (usually 256)
      * @param alphaToBitmask indicates if alpha information should be converted
      * 
      * @return the transformed image
-     * 
-     * @throws IOException in case image conversion fails
      */
-    BufferedImage reduceColors(BufferedImage image, int maxColors, boolean alphaToBitmask) throws IOException;
+    public BufferedImage reduceColors(BufferedImage image, int maxColors, boolean alphaToBitmask) {
+
+        return Quantize.process(image, maxColors, alphaToBitmask);
+    }
 
     /**
      * Resizes an image according to the width and height specified.<p>
@@ -216,7 +390,10 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage resize(BufferedImage image, int width, int height);
+    public BufferedImage resize(BufferedImage image, int width, int height) {
+
+        return resize(image, width, height, false);
+    }
 
     /**
      * Resizes an image according to the width and height specified,
@@ -232,7 +409,52 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit);
+    public BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit) {
+
+        return resize(image, width, height, bestfit, true);
+    }
+
+    /**
+     * Resizes an image according to the width and height specified,
+     * keeping the aspect ratio if required.<p>
+     * 
+     * If set to <code>true</code>, the bestfit option will keep the image within the dimensions specified
+     * without losing the aspect ratio.<p>
+     * 
+     * If set to <code>false</code>, the blowup option will not enlarge an image that is already smaller 
+     * then the sepcified target dimensions.<p>
+     * 
+     * @param image the image to resize
+     * @param width the width of the target image
+     * @param height the height of the target image
+     * @param bestfit if true, the aspect ratio of the image will be kept
+     * @param blowup if false, smaller images will not be enlarged to fit in the target dimensions
+     * 
+     * @return the transformed image
+     */
+    public BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit, boolean blowup) {
+
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        if (((imageWidth == width) && (imageHeight == height))
+            || (!blowup && (imageWidth < width) && (imageHeight < height))) {
+            // no resize required
+            return image;
+        }
+
+        float widthScale = (width / (float)imageWidth);
+        float heightScale = (height / (float)imageHeight);
+
+        if (bestfit) {
+            // keep image aspect ratio, find best scale for the result image
+            if (widthScale <= heightScale) {
+                heightScale = widthScale;
+            } else {
+                widthScale = heightScale;
+            }
+        }
+        return scale(image, widthScale, heightScale);
+    }
 
     /**
      * Resizes the given image to best fit into the given dimensions (only if it does not already
@@ -247,14 +469,111 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage resize(BufferedImage image, int width, int height, Color backgroundColor, int position);
+    public BufferedImage resize(BufferedImage image, int width, int height, Color backgroundColor, int position) {
+
+        return resize(image, width, height, backgroundColor, position, true);
+    }
+
+    /**
+     * Resizes the given image to best fit into the given dimensions (only if it does not already
+     * fit in the dimensions), placing the scaled image 
+     * at the indicated position on a background with the given color. 
+     * 
+     * @param image the image to resize
+     * @param width the width of the target image
+     * @param height the height of the target image
+     * @param backgroundColor
+     * @param position the position to place the scaled image at
+     * @param blowup if false, smaller images will not be enlarged to fit in the target dimensions
+     * 
+     * @return the transformed image
+     */
+    public BufferedImage resize(
+        BufferedImage image,
+        int width,
+        int height,
+        Color backgroundColor,
+        int position,
+        boolean blowup) {
+
+        // resize the image to fit into the required dimension
+        BufferedImage scaled = resize(image, width, height, true, blowup);
+        // check if the image fits after rescale
+        int scaledWidth = scaled.getWidth();
+        int scaledHeight = scaled.getHeight();
+        if ((scaledWidth == width) && (scaledHeight == height)) {
+            // no resize required
+            return scaled;
+        }
+
+        // create the background image
+        ColorModel cm = scaled.getColorModel();
+        BufferedImage result = createImage(scaled.getColorModel(), width, height);
+        Graphics2D g = result.createGraphics();
+        if (!cm.hasAlpha() && (backgroundColor == COLOR_TRANSPARENT)) {
+            // alpha not supported by target color model
+            backgroundColor = m_renderSettings.getTransparentReplaceColor();
+        }
+        if (backgroundColor != COLOR_TRANSPARENT) {
+            // don't fill if background is transparent
+            g.setPaintMode();
+            g.setColor(backgroundColor);
+            g.fillRect(0, 0, width, height);
+        }
+
+        int x;
+        int y;
+        switch (position) {
+            case Simapi.POS_DOWN_LEFT:
+                x = 0;
+                y = height - scaledHeight;
+                break;
+            case Simapi.POS_DOWN_RIGHT:
+                x = width - scaledWidth;
+                y = height - scaledHeight;
+                break;
+            case Simapi.POS_STRAIGHT_DOWN:
+                x = (width - scaledWidth) / 2;
+                y = height - scaledHeight;
+                break;
+            case Simapi.POS_STRAIGHT_LEFT:
+                x = 0;
+                y = (height - scaledHeight) / 2;
+                break;
+            case Simapi.POS_STRAIGHT_RIGHT:
+                x = width - scaledWidth;
+                y = (height - scaledHeight) / 2;
+                break;
+            case Simapi.POS_STRAIGHT_UP:
+                x = (width - scaledWidth) / 2;
+                y = 0;
+                break;
+            case Simapi.POS_UP_LEFT:
+                x = 0;
+                y = 0;
+                break;
+            case Simapi.POS_UP_RIGHT:
+                x = width - scaledWidth;
+                y = 0;
+                break;
+            default:
+                // crop center
+                x = (width - scaledWidth) / 2;
+                y = (height - scaledHeight) / 2;
+        }
+
+        // draw the scaled image to the conext at the target position
+        g.drawImage(scaled, x, y, null);
+
+        return result;
+    }
 
     /**
      * Resizes an image according to the width and height specified,
      * cropping the image along the sides in case the required height and with can not be reached without 
      * changing the apsect ratio of the image.<p>
      * 
-     * Use the constants <code>{@link #POS_CENTER}</code> etc. to indicate the crop position.<p>
+     * Use the constants <code>{@link Simapi#POS_CENTER}</code> etc. to indicate the crop position.<p>
      * 
      * @param image the image to resize
      * @param width the width of the target image
@@ -263,7 +582,40 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage resize(BufferedImage image, int width, int height, int position);
+    public BufferedImage resize(BufferedImage image, int width, int height, int position) {
+
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        if ((imageWidth == width) && (imageHeight == height)) {
+            // no resize required
+            return image;
+        }
+
+        float widthScale = (width / (float)imageWidth);
+        float heightScale = (height / (float)imageHeight);
+
+        // keep image aspect ratio, find best scale for the result image
+        if (widthScale >= heightScale) {
+            heightScale = widthScale;
+        } else {
+            widthScale = heightScale;
+        }
+
+        BufferedImage scaledImage;
+        if ((widthScale != 1.0) && (heightScale != 1.0)) {
+            // scale the image to the required size
+            scaledImage = scale(image, widthScale, heightScale);
+            // reset to new scale
+            imageWidth = scaledImage.getWidth();
+            imageHeight = scaledImage.getHeight();
+        } else {
+            // no scale required
+            scaledImage = image;
+        }
+
+        // return the cropped result
+        return crop(scaledImage, width, height, position);
+    }
 
     /**
      * Scales an image according to the given scale factor.<p>
@@ -276,7 +628,10 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage scale(BufferedImage image, float scale);
+    public BufferedImage scale(BufferedImage image, float scale) {
+
+        return scale(image, scale, scale);
+    }
 
     /**
      * Scale the image with different ratios along the width and height.<p>
@@ -287,7 +642,32 @@ public interface Simapi {
      * 
      * @return the transformed image
      */
-    BufferedImage scale(BufferedImage image, float widthScale, float heightScale);
+    public BufferedImage scale(BufferedImage image, float widthScale, float heightScale) {
+
+        RenderingHints renderHints = m_renderSettings.getRenderingHints();
+        if (renderHints == RenderSettings.HINTS_QUALITY) {
+            // default render setting, adjust for thumbnail generation to avoid "slow scaling" issue 
+            if (((widthScale < 0.25f) && (heightScale < 0.25f))
+                || ((widthScale < 0.5f) && (image.getHeight() * widthScale < 101))
+                || ((heightScale < 0.5f) && (image.getWidth() * heightScale < 101))) {
+                // thumbnail generation, use speed settings
+                renderHints = RenderSettings.HINTS_SPEED;
+            }
+        }
+        // create the image scaling transformation
+        AffineTransform at = AffineTransform.getScaleInstance(widthScale, heightScale);
+        AffineTransformOp ato = new AffineTransformOp(at, renderHints);
+
+        // duplicating the image will ensure the color model of the image is RGB / ARGB (for best scaling results)
+        image = duplicateImage(image);
+        // must create the result image manually, otherwise the size of the result image may be 1 pixel off
+        BufferedImage result = createImage(
+            image.getColorModel(),
+            (int)(image.getWidth() * widthScale),
+            (int)(image.getHeight() * heightScale));
+
+        return ato.filter(image, result);
+    }
 
     /**
      * Writes an image to a local file.<p>
@@ -298,23 +678,10 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be written
      */
-    void write(BufferedImage image, File destination, String type) throws IOException;
+    public void write(BufferedImage image, File destination, String type) throws IOException {
 
-    /**
-     * Writes an image to a local file, using the the given quality.<p>
-     * 
-     * The <code>quality</code> is used only if the image <code>type</code> supports different qualities.
-     * For example, this it is used when writing JPEG images.
-     * A quality of 0.1 is very poor, 0.75 is ok, 1.0 is maximum.<p> 
-     * 
-     * @param image the image to write
-     * @param destination the destination file
-     * @param type the type of the image to write
-     * @param quality the quality to use
-     * 
-     * @throws IOException in case the image could not be written
-     */
-    void write(BufferedImage image, File destination, String type, float quality) throws IOException;
+        write(image, (Object)destination, type);
+    }
 
     /**
      * Writes an image to an output stream.<p>
@@ -325,23 +692,10 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be written
      */
-    void write(BufferedImage image, OutputStream destination, String type) throws IOException;
+    public void write(BufferedImage image, OutputStream destination, String type) throws IOException {
 
-    /**
-     * Writes an image to an output stream, using the the given quality.<p>
-     * 
-     * The <code>quality</code> is used only if the image <code>type</code> supports different qualities.
-     * For example, this it is used when writing JPEG images.
-     * A quality of 0.1 is very poor, 0.75 is ok, 1.0 is maximum.<p> 
-     * 
-     * @param image the image to write
-     * @param destination the destination output stream
-     * @param type the type of the image to write
-     * @param quality the quality to use
-     * 
-     * @throws IOException in case the image could not be written
-     */
-    void write(BufferedImage image, OutputStream destination, String type, float quality) throws IOException;
+        write(image, (Object)destination, type);
+    }
 
     /**
      * Writes an image to a local file.<p>
@@ -352,5 +706,116 @@ public interface Simapi {
      * 
      * @throws IOException in case the image could not be written
      */
-    void write(BufferedImage image, String destination, String type) throws IOException;
+    public void write(BufferedImage image, String destination, String type) throws IOException {
+
+        write(image, new File(destination), type);
+    }
+
+    /**
+     * Creates a buffered image that has the given dimensions and uses the given color model.<p>
+     * 
+     * @param colorModel the color model to use
+     * @param width the width of the image to create
+     * @param height the height of the image to create
+     * 
+     * @return a new image with the given dimensions and uses the given color model
+     */
+    protected BufferedImage createImage(ColorModel colorModel, int width, int height) {
+
+        BufferedImage result;
+        if (colorModel.getTransparency() == Transparency.OPAQUE) {
+            result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        } else {
+            result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE);
+        }
+        return result;
+    }
+
+    /**
+     * Duplicates a given image, for further modification.<p>
+     * 
+     * @param image the image to duplicate
+     * 
+     * @return the duplicated image
+     */
+    protected BufferedImage duplicateImage(BufferedImage image) {
+
+        BufferedImage result = createImage(image.getColorModel(), image.getWidth(), image.getHeight());
+        Graphics2D g = result.createGraphics();
+        g.drawImage(image, 0, 0, null);
+
+        return result;
+    }
+
+    /**
+     * Writes an image to the given output object, using the the given quality.<p>
+     * 
+     * The <code>quality</code> is used only if the image <code>type</code> supports different qualities.
+     * For example, this it is used when writing JPEG images.
+     * A quality of 0.1 is very poor, 0.75 is ok, 1.0 is maximum.<p> 
+     * 
+     * @param im the image to write
+     * @param output the destination to write the image to
+     * @param formatName the type of the image to write
+     * 
+     * @throws IOException in case the image could not be written
+     */
+    protected void write(BufferedImage im, Object output, String formatName) throws IOException {
+
+        if (output == null) {
+            throw new IllegalArgumentException("output == null!");
+        }
+        if (im == null) {
+            throw new IllegalArgumentException("image == null!");
+        }
+        if (formatName == null) {
+            throw new IllegalArgumentException("formatName == null!");
+        }
+
+        // create the output stream
+        ImageOutputStream stream = null;
+        try {
+            stream = ImageIO.createImageOutputStream(output);
+        } catch (IOException e) {
+            throw new IIOException("Can't create output stream!", e);
+        }
+
+        // make sure we have our exact constants to work with
+        formatName = getImageType(formatName);
+        if (formatName == null) {
+            throw new IllegalArgumentException("no writers found for format '" + formatName + "'");
+        }
+
+        // make sure there are no transparent pixels left if not supported by the written image format
+        if (im.getColorModel().hasAlpha()
+            && ((TYPE_JPEG == formatName) || (TYPE_TIFF == formatName) || (TYPE_BMP == formatName))) {
+            // several formats do not support alpha
+            BufferedImage result = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D g = result.createGraphics();
+            g.setPaintMode();
+            g.setColor(m_renderSettings.getTransparentReplaceColor());
+            g.fillRect(0, 0, result.getWidth(), result.getHeight());
+            g.drawImage(im, 0, 0, null);
+            im = result;
+        }
+
+        // obtain the writer for the image
+        // this must work since it is already done in the #getImageType(String) call above
+        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByFormatName(formatName).next();
+
+        // get default image writer parameter
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        if (param.canWriteCompressed()) {
+            // set compression parameters if supported by writer
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(m_renderSettings.getCompressionQuality());
+        }
+
+        // now write the image
+        writer.setOutput(stream);
+        writer.write(null, new IIOImage(im, null, null), param);
+        stream.flush();
+        writer.dispose();
+        stream.close();
+    }
 }
