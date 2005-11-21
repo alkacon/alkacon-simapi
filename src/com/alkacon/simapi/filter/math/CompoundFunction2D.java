@@ -1,0 +1,1 @@
+/* * Copyright (C) Jerry Huxtable 1998 */package com.alkacon.simapi.filter.math;public abstract class CompoundFunction2D implements Function2D {	protected Function2D basis;		public CompoundFunction2D(Function2D basis) {		this.basis = basis;	}		public void setBasis(Function2D basis) {		this.basis = basis;	}	public Function2D getBasis() {		return basis;	}}

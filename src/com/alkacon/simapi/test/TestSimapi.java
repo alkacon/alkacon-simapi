@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2005/11/15 15:42:57 $
- * Version: $Revision: 1.3 $
+ * Date   : $Date: 2005/11/21 13:19:13 $
+ * Version: $Revision: 1.4 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -33,16 +33,20 @@ package com.alkacon.simapi.test;
 
 import com.alkacon.simapi.RenderSettings;
 import com.alkacon.simapi.Simapi;
+import com.alkacon.simapi.filter.ContrastFilter;
+import com.alkacon.simapi.filter.GrayscaleFilter;
+import com.alkacon.simapi.filter.LinearColormap;
+import com.alkacon.simapi.filter.LookupFilter;
+import com.alkacon.simapi.filter.ShadowFilter;
 
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 
 //import com.drew.imaging.jpeg.JpegMetadataReader;
 //import com.drew.metadata.Directory;
@@ -53,31 +57,6 @@ import junit.framework.TestSuite;
  * Test class for the imaging operations.<p>
  */
 public class TestSimapi extends VisualTestCase {
-
-    /**
-     * Test suite for this test class.<p>
-     * 
-     * @return the test suite
-     */
-    public static Test suite() {
-
-        TestSuite suite = new TestSuite();
-        suite.setName(TestSimapi.class.getName());
-
-        suite.addTest(new TestSimapi("testScaleTransparent"));
-        suite.addTest(new TestSimapi("testResizeScale"));
-        suite.addTest(new TestSimapi("testResizeScaleFill"));
-        suite.addTest(new TestSimapi("testSlowScalingIssue"));
-        suite.addTest(new TestSimapi("testWriteJpegQuality"));
-        suite.addTest(new TestSimapi("testResizeScaleFillSmall"));
-        suite.addTest(new TestSimapi("testCrop"));
-        suite.addTest(new TestSimapi("testResizeCrop"));
-        suite.addTest(new TestSimapi("testWriteGif"));
-        suite.addTest(new TestSimapi("testWriteJpegAndPng"));
-        suite.addTest(new TestSimapi("testRead"));
-
-        return suite;
-    }
 
     /**
      * Default JUnit constructor.<p>
@@ -208,67 +187,134 @@ public class TestSimapi extends VisualTestCase {
      * 
      * @throws Exception if the test fails
      */
+    public void testFilters() throws Exception {
+        
+        BufferedImage read;
+        File input;
+                
+        input = new File(getClass().getResource("DSCN0754.JPG").getPath());
+
+//      // Java standard metadata extraction - no Exif info is read from file
+//      ImageInputStream stream = ImageIO.createImageInputStream(input);
+//      Iterator iter = ImageIO.getImageReaders(stream);
+//      ImageReader reader = (ImageReader)iter.next();                
+//      ImageReadParam param = reader.getDefaultReadParam();
+//      reader.setInput(stream, true, true);        
+//      IIOMetadata meta = reader.getImageMetadata(0);
+//      if (meta != null) {
+//          String formats[] = meta.getMetadataFormatNames();
+//          System.out.println("format count: " + formats.length);
+//          for (int i=0; i<formats.length; i++) {
+//              System.out.println("format " + i + ": " + formats[i]);
+//              Node metaData = meta.getAsTree(formats[i]);
+//              TransformerFactory tFactory = TransformerFactory.newInstance();
+//              Transformer transformer = tFactory.newTransformer();
+//              DOMSource source = new DOMSource(metaData);
+//              StreamResult sr = new StreamResult(System.out);
+//              transformer.transform(source, sr);
+//          }            
+//      } else {
+//          System.out.println("meta is null");
+//      }        
+//      BufferedImage img0 = reader.read(0, param);
+//      stream.close();
+//      reader.dispose();
+//    
+      
+//      Metadata metadata = JpegMetadataReader.readMetadata(input);
+//      // iterate through metadata directories
+//      Iterator directories = metadata.getDirectoryIterator();
+//      while (directories.hasNext()) {
+//          Directory directory = (Directory)directories.next();
+//          // iterate through tags and print to System.out
+//          Iterator tags = directory.getTagIterator();
+//          while (tags.hasNext()) {
+//              Tag tag = (Tag)tags.next();
+//              // use Tag.toString()
+//              System.out.println(tag);
+//          }
+//      }
+      
+      /* TODO: Writing of Exif information
+       * 
+       * Libary for Exif extraction AND writing (but only with Java 1.5):
+       * http://mediachest.sourceforge.net/mediautil/
+       */
+
+      RenderSettings rs = new RenderSettings(Simapi.RENDER_QUALITY);
+      Simapi simapi = new Simapi(rs);
+
+      read = Simapi.read(input);
+      read = simapi.resize(read, 800, 600, false);
+      checkImage(new BufferedImage[] {read}, "Has it been read?");
+      
+      GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
+      BufferedImage gray = simapi.applyFilter(read, grayscaleFilter);
+      checkImage(new BufferedImage[] {gray}, "Is is gray?");
+      
+      ContrastFilter contrastFilter = new ContrastFilter();
+      contrastFilter.setGain(0.7f);
+      contrastFilter.setBias(0.7f);
+      BufferedImage contrast = simapi.applyFilter(read, contrastFilter);
+      checkImage(new BufferedImage[] {contrast}, "What about the contrast?");
+      
+//      OilFilter oilFilter = new OilFilter();
+//      BufferedImage oil = simapi.applyFilter(read, oilFilter);
+//      checkImage(new BufferedImage[] {oil}, "In Oil?");
+      
+      ShadowFilter shadowFilter = new ShadowFilter();
+      shadowFilter.setXOffset(10);
+      shadowFilter.setYOffset(10);
+      shadowFilter.setOpacity(128);
+      shadowFilter.setBackgroundColor(Color.RED.getRGB());
+      BufferedImage shadow = simapi.applyFilter(read, shadowFilter);
+      checkImage(new BufferedImage[] {shadow}, "What about the shadow?");
+      assertEquals(820, shadow.getWidth());
+      assertEquals(620, shadow.getHeight());
+      
+      
+      LinearColormap colormap = new LinearColormap();
+      colormap.setColor1(new Color(162, 138, 101).getRGB());
+      colormap.setColor1(new Color(156, 113, 46).getRGB());
+      colormap.setColor2(new Color(255, 255, 255).getRGB());
+      colormap.setColor2(new Color(255, 241, 201).getRGB());
+//      colormap.setColor1(Color.BLACK.getRGB());
+//      colormap.setColor2(Color.YELLOW.getRGB());
+      LookupFilter lookupFilter = new LookupFilter();
+      lookupFilter.setColormap(colormap);
+      BufferedImage lookup = simapi.applyFilter(read, lookupFilter);
+      checkImage(new BufferedImage[] {lookup}, "Sepia effect?");
+      
+      // read = Simapi.read(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+      
+      rs.addImageFilter(grayscaleFilter);
+      rs.addImageFilter(shadowFilter);
+      rs.setTransparentReplaceColor(Simapi.COLOR_TRANSPARENT);
+      shadowFilter.setBackgroundColor(Color.RED.getRGB());
+      shadowFilter.setXOffset(5);
+      shadowFilter.setYOffset(5);
+      shadowFilter.setOpacity(196);
+      Rectangle targetSize = simapi.applyFilterDimensions(read.getWidth(), read.getHeight());      
+      BufferedImage combined = simapi.resize(read, (int)targetSize.getWidth(), (int)targetSize.getHeight(), Simapi.COLOR_TRANSPARENT, Simapi.POS_CENTER);      
+      combined = simapi.applyFilters(combined);
+      checkImage(new BufferedImage[] {combined}, "Combined grayscale and shadow effects?");
+      assertEquals(read.getWidth(), combined.getWidth());
+      assertEquals(read.getHeight(), combined.getHeight());
+    }
+    
+    /**
+     * Tests writing an image as JPEG with different quality settings.<p>
+     * 
+     * @throws Exception if the test fails
+     */
     public void testWriteJpegQuality() throws Exception {
         
         BufferedImage read;
         File input;
-        File destination;
-                
-        input = new File(getClass().getResource("DSCN0754.JPG").getPath());
-
-//        // Java standard metadata extraction - no Exif info is read from file
-//        ImageInputStream stream = ImageIO.createImageInputStream(input);
-//        Iterator iter = ImageIO.getImageReaders(stream);
-//        ImageReader reader = (ImageReader)iter.next();                
-//        ImageReadParam param = reader.getDefaultReadParam();
-//        reader.setInput(stream, true, true);        
-//        IIOMetadata meta = reader.getImageMetadata(0);
-//        if (meta != null) {
-//            String formats[] = meta.getMetadataFormatNames();
-//            System.out.println("format count: " + formats.length);
-//            for (int i=0; i<formats.length; i++) {
-//                System.out.println("format " + i + ": " + formats[i]);
-//                Node metaData = meta.getAsTree(formats[i]);
-//                TransformerFactory tFactory = TransformerFactory.newInstance();
-//                Transformer transformer = tFactory.newTransformer();
-//                DOMSource source = new DOMSource(metaData);
-//                StreamResult sr = new StreamResult(System.out);
-//                transformer.transform(source, sr);
-//            }            
-//        } else {
-//            System.out.println("meta is null");
-//        }        
-//        BufferedImage img0 = reader.read(0, param);
-//        stream.close();
-//        reader.dispose();
-//      
+        File destination;               
         
-//        Metadata metadata = JpegMetadataReader.readMetadata(input);
-//        // iterate through metadata directories
-//        Iterator directories = metadata.getDirectoryIterator();
-//        while (directories.hasNext()) {
-//            Directory directory = (Directory)directories.next();
-//            // iterate through tags and print to System.out
-//            Iterator tags = directory.getTagIterator();
-//            while (tags.hasNext()) {
-//                Tag tag = (Tag)tags.next();
-//                // use Tag.toString()
-//                System.out.println(tag);
-//            }
-//        }
-        
-        /* TODO: Writing of Exif information
-         * 
-         * Libary for Exif extraction AND writing (but only with Java 1.5):
-         * http://mediachest.sourceforge.net/mediautil/
-         */
-
         RenderSettings rs = new RenderSettings(Simapi.RENDER_QUALITY);
         Simapi simapi = new Simapi(rs);
-
-        read = Simapi.read(input);
-        read = simapi.resize(read, 800, 600, false);
-        checkImage(new BufferedImage[] {read}, "Has it been read?");
         
         input = new File(getClass().getResource("screen1.png").getPath());
         BufferedImage img1 = Simapi.read(input);

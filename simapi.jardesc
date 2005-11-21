@@ -2,14 +2,17 @@
 <jardesc>
 <jar path="C:/Eclipse/workspace/OpenCms/webapp/WEB-INF/lib/alkacon-simapi-0.9.3.jar"/>
 <options buildIfNeeded="true" compress="true" descriptionLocation="/AlkaconSimapi/simapi.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="true" overwrite="false" saveDescription="true" useSourceFolders="false"/>
-<manifest generateManifest="true" manifestLocation="/AlkaconSimapi/manifest.txt" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+<manifest generateManifest="false" manifestLocation="/AlkaconSimapi/manifest.txt" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
 <sealing sealJar="false">
 <packagesToSeal/>
 <packagesToUnSeal/>
 </sealing>
 </manifest>
 <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.util"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter.math"/>
 <javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter.fill"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.util"/>
 </selectedElements>
 </jardesc>

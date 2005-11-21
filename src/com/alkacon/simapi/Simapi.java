@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2005/11/15 14:04:02 $
- * Version: $Revision: 1.2 $
+ * Date   : $Date: 2005/11/21 13:19:13 $
+ * Version: $Revision: 1.3 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -31,17 +31,24 @@
 
 package com.alkacon.simapi;
 
+import com.alkacon.simapi.filter.WholeImageFilter;
 import com.alkacon.simapi.util.GifImageWriterSpi;
 import com.alkacon.simapi.util.Quantize;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.ImageFilter;
+import java.awt.image.PixelGrabber;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -564,7 +571,8 @@ public class Simapi {
 
         // draw the scaled image to the conext at the target position
         g.drawImage(scaled, x, y, null);
-
+        g.dispose();
+        
         return result;
     }
 
@@ -668,7 +676,58 @@ public class Simapi {
 
         return ato.filter(image, result);
     }
+    
+    public BufferedImage applyFilter(BufferedImage image, ImageFilter filter) {
 
+        // apply filter using default AWT toolkit
+        Image img = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(), filter));
+
+        // use a pixel grabber to retrieve the image's color model;
+        // grabbing a single pixel is usually sufficient
+        PixelGrabber pg = new PixelGrabber(img, 0, 0, 1, 1, false);
+        try {
+            pg.grabPixels();
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        // recast the AWT image into a BufferedImage (using alpha RGB)
+        BufferedImage result = new BufferedImage(
+            img.getWidth(null),
+            img.getHeight(null),
+            pg.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+
+        // draw the generated image to the result canvas and return
+        Graphics2D g = result.createGraphics();
+        g.drawImage(img, 0, 0, null);
+        g.dispose();
+        return result;
+    }
+
+    public BufferedImage applyFilters(BufferedImage image) {
+
+        Iterator i = m_renderSettings.getImageFilters().iterator();
+        while (i.hasNext()) {
+            ImageFilter filter = (ImageFilter)i.next();
+            image = applyFilter(image, filter);
+        }
+        return image;
+    }
+
+    public Rectangle applyFilterDimensions(int width, int height) {
+
+        Rectangle base = new Rectangle(width, height);
+        Iterator i = m_renderSettings.getImageFilters().iterator();
+        while (i.hasNext()) {
+            ImageFilter filter = (ImageFilter)i.next();
+            if (filter instanceof WholeImageFilter) {
+                WholeImageFilter wholeFilter = (WholeImageFilter)filter;
+                base = wholeFilter.getTransformedSpace(base);
+            }
+        }
+        return base;
+    }
+    
     /**
      * Writes an image to a local file.<p>
      * 
@@ -723,10 +782,11 @@ public class Simapi {
     protected BufferedImage createImage(ColorModel colorModel, int width, int height) {
 
         BufferedImage result;
-        if (colorModel.getTransparency() == Transparency.OPAQUE) {
+        if ((colorModel.getTransparency() == Transparency.OPAQUE)
+            && (m_renderSettings.getTransparentReplaceColor() != COLOR_TRANSPARENT)) {
             result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         } else {
-            result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE);
+            result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         }
         return result;
     }
@@ -743,6 +803,7 @@ public class Simapi {
         BufferedImage result = createImage(image.getColorModel(), image.getWidth(), image.getHeight());
         Graphics2D g = result.createGraphics();
         g.drawImage(image, 0, 0, null);
+        g.dispose();
 
         return result;
     }
@@ -796,6 +857,7 @@ public class Simapi {
             g.setColor(m_renderSettings.getTransparentReplaceColor());
             g.fillRect(0, 0, result.getWidth(), result.getHeight());
             g.drawImage(im, 0, 0, null);
+            g.dispose();
             im = result;
         }
 

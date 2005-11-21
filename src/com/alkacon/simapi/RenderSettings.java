@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/RenderSettings.java,v $
- * Date   : $Date: 2005/11/15 15:42:57 $
- * Version: $Revision: 1.2 $
+ * Date   : $Date: 2005/11/21 13:19:13 $
+ * Version: $Revision: 1.3 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -33,7 +33,10 @@ package com.alkacon.simapi;
 
 import java.awt.Color;
 import java.awt.RenderingHints;
+import java.awt.image.ImageFilter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Provides rendering hints of different quality for the image processing.<p>
@@ -56,6 +59,9 @@ public class RenderSettings {
 
     /** The rendering hints of this settings object. */
     private RenderingHints m_hints;
+
+    /** The internal list of image filters to apply to the image. */
+    private List m_imageFilters;
 
     /** The backgound color replacement for the transparent color, used if transparency is not supported by the selected image format. */
     private Color m_transparentReplaceColor;
@@ -102,6 +108,7 @@ public class RenderSettings {
             m_hints = newHints;
         }
         m_transparentReplaceColor = Color.WHITE;
+        m_imageFilters = new ArrayList();
     }
 
     /**
@@ -155,6 +162,16 @@ public class RenderSettings {
     }
 
     /**
+     * Adds a new image filter to the filter processing list.<p>
+     * 
+     * @param filter the image filter to add
+     */
+    public void addImageFilter(ImageFilter filter) {
+
+        m_imageFilters.add(filter);
+    }
+
+    /**
      * Returns the image save compression quality, used for JPEG images (and other formats that support such a setting).<p>
      * 
      * This is used only if the image <code>type</code> supports different qualities.
@@ -166,6 +183,16 @@ public class RenderSettings {
     public float getCompressionQuality() {
 
         return m_compressionQuality;
+    }
+
+    /**
+     * Returns a copy of the list of image filters that should be applied to the ürocessed image.<p>
+     * 
+     * @return a copy of the list of image filters that should be applied to the ürocessed image
+     */
+    public List getImageFilters() {
+
+        return new ArrayList(m_imageFilters);
     }
 
     /**

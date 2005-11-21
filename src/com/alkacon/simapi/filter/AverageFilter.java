@@ -1,0 +1,1 @@
+/* * Copyright (C) Jerry Huxtable 1998 */package com.alkacon.simapi.filter;import java.awt.image.*;public class AverageFilter extends ConvolveFilter {		protected static float[] theMatrix = { 0.1f, 0.1f, 0.1f, 0.1f, 0.2f, 0.1f, 0.1f, 0.1f, 0.1f };	public AverageFilter() {		super(theMatrix);	}	public String toString() {		return "Blur/Average Blur";	}}

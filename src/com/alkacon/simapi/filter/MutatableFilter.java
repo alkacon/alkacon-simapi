@@ -1,0 +1,1 @@
+package com.alkacon.simapi.filter;import java.awt.image.*;public interface MutatableFilter {	public void mutate(int amount, ImageFilter dst, boolean keepShape, boolean keepColors);}
