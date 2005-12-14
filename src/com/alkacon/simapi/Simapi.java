@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2005/11/21 13:19:13 $
- * Version: $Revision: 1.3 $
+ * Date   : $Date: 2005/12/15 22:05:14 $
+ * Version: $Revision: 1.5 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -32,6 +32,7 @@
 package com.alkacon.simapi;
 
 import com.alkacon.simapi.filter.WholeImageFilter;
+import com.alkacon.simapi.filter.buffered.BoxBlurFilter;
 import com.alkacon.simapi.util.GifImageWriterSpi;
 import com.alkacon.simapi.util.Quantize;
 
@@ -231,8 +232,7 @@ public class Simapi {
      */
     public static BufferedImage read(byte[] source) throws IOException {
 
-        ByteArrayInputStream in = new ByteArrayInputStream(source);
-        return read(in);
+        return read(new ByteArrayInputStream(source));
     }
 
     /**
@@ -246,7 +246,7 @@ public class Simapi {
      */
     public static BufferedImage read(File source) throws IOException {
 
-        return ImageIO.read(source);
+        return ensureImageIsSystemType(ImageIO.read(source), true);
     }
 
     /**
@@ -260,7 +260,7 @@ public class Simapi {
      */
     public static BufferedImage read(InputStream source) throws IOException {
 
-        return ImageIO.read(source);
+        return ensureImageIsSystemType(ImageIO.read(source), true);
     }
 
     /**
@@ -288,7 +288,134 @@ public class Simapi {
      */
     public static BufferedImage read(URL source) throws IOException {
 
-        return ImageIO.read(source);
+        return ensureImageIsSystemType(ImageIO.read(source), true);
+    }
+
+    /**
+     * Returns an image that is ensured the be of either {@link BufferedImage#TYPE_INT_RGB} or 
+     * {@link BufferedImage#TYPE_INT_ARGB}.<p> 
+     * 
+     * Ensuring the image is of one of the possible return types is done before applying an image filter transformation
+     * since if the image is of a different (not native) type, the transformation can take very long
+     * and consume a lot of resources.<p>
+     * 
+     * @param image the original image
+     * @param allowTransparent if <code>true</code>, transparent (alpha layer) pixels is allowed
+     * @return an image that is ensured the be of a system type
+     */
+    protected static BufferedImage ensureImageIsSystemType(BufferedImage image, boolean allowTransparent) {
+
+        switch (image.getType()) {
+            case BufferedImage.TYPE_INT_ARGB:
+            case BufferedImage.TYPE_INT_RGB:
+                // image already uses a system compatible color model, no need for transformation
+                return image;
+            default:
+        // image must be transformed to system color
+        }
+
+        BufferedImage result;
+        if (allowTransparent && (image.getColorModel().getTransparency() != Transparency.OPAQUE)) {
+            // use RGB color model with alpha
+            result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        } else {
+            // use RGB color model without alpha (no transparency)
+            result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        }
+
+        // copy the pixels from the source image ti the result image
+        Graphics2D g = result.createGraphics();
+        g.drawImage(image, 0, 0, null);
+        g.dispose();
+
+        // flush original - doesn't actually do anything but looks right to me anyway 
+        image.flush();
+        image = null;
+
+        return result;
+    }
+
+    /**
+     * Applies the given filter to the image.<p>
+     * 
+     * @param image the image to apply the filter to
+     * @param filter the filter to apply
+     * 
+     * @return the image with the filter applied
+     */
+    public BufferedImage applyFilter(BufferedImage image, ImageFilter filter) {
+
+        // apply filter using default AWT toolkit
+        Image img = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(), filter));
+
+        // use a pixel grabber to retrieve the image's color model;
+        // grabbing a single pixel is usually sufficient
+        PixelGrabber pg = new PixelGrabber(img, 0, 0, 1, 1, false);
+        try {
+            pg.grabPixels();
+        } catch (InterruptedException e) {
+            // ignore
+        }
+
+        // recast the AWT image into a BufferedImage (using alpha RGB)
+        BufferedImage result = new BufferedImage(
+            img.getWidth(null),
+            img.getHeight(null),
+            pg.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+
+        // draw the generated image to the result canvas and return
+        Graphics2D g = result.createGraphics();
+        g.drawImage(img, 0, 0, null);
+        g.dispose();
+        return result;
+    }
+
+    /**
+     * Calculates the image size for an image after all filters returned by {@link RenderSettings#getImageFilters()}  
+     * have been applied.<p>
+     *  
+     * @param width the image width
+     * @param height the image height
+     *  
+     * @return the image size after all filters have been applied 
+     */
+    public Rectangle applyFilterDimensions(int width, int height) {
+
+        Rectangle base = new Rectangle(width, height);
+        Iterator i = m_renderSettings.getImageFilters().iterator();
+        while (i.hasNext()) {
+            ImageFilter filter = (ImageFilter)i.next();
+            if (filter instanceof WholeImageFilter) {
+                WholeImageFilter wholeFilter = (WholeImageFilter)filter;
+                base = wholeFilter.getTransformedSpace(base);
+            }
+        }
+        return base;
+    }
+
+    /**
+     * Applies all filters returned by {@link RenderSettings#getImageFilters()} to the given image.<p>  
+     * 
+     * @param image the image to apply the filters to
+     * 
+     * @return the image with the filters applied
+     */
+    public BufferedImage applyFilters(BufferedImage image) {
+
+        // make sure the image is of a compatible system type
+        image = ensureImageIsSystemType(image, true);
+
+        threadSetNice();
+
+        Iterator i = m_renderSettings.getImageFilters().iterator();
+        while (i.hasNext()) {
+            ImageFilter filter = (ImageFilter)i.next();
+            image = applyFilter(image, filter);
+        }
+
+        threadSetNormal();
+
+        return image;
     }
 
     /**
@@ -513,6 +640,8 @@ public class Simapi {
             return scaled;
         }
 
+        threadSetNice();
+
         // create the background image
         ColorModel cm = scaled.getColorModel();
         BufferedImage result = createImage(scaled.getColorModel(), width, height);
@@ -572,7 +701,10 @@ public class Simapi {
         // draw the scaled image to the conext at the target position
         g.drawImage(scaled, x, y, null);
         g.dispose();
-        
+        scaled.flush();
+        scaled = null;
+
+        threadSetNormal();
         return result;
     }
 
@@ -652,82 +784,55 @@ public class Simapi {
      */
     public BufferedImage scale(BufferedImage image, float widthScale, float heightScale) {
 
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        // ensure the image uses a RGB system color model (otherwise operation may take very long and results may be bad quality)
+        image = ensureImageIsSystemType(image, m_renderSettings.getTransparentReplaceColor() != COLOR_TRANSPARENT);
+
         RenderingHints renderHints = m_renderSettings.getRenderingHints();
         if (renderHints == RenderSettings.HINTS_QUALITY) {
             // default render setting, adjust for thumbnail generation to avoid "slow scaling" issue 
             if (((widthScale < 0.25f) && (heightScale < 0.25f))
-                || ((widthScale < 0.5f) && (image.getHeight() * widthScale < 101))
-                || ((heightScale < 0.5f) && (image.getWidth() * heightScale < 101))) {
+                || ((widthScale < 0.5f) && (width * widthScale < 101))
+                || ((heightScale < 0.5f) && (height * heightScale < 101))) {
+
                 // thumbnail generation, use speed settings
                 renderHints = RenderSettings.HINTS_SPEED;
             }
         }
+
+        threadSetNice();
+
+        if (m_renderSettings.isUseBlur()
+            && ((width * height) < m_renderSettings.getMaximumBlurSize())
+            && ((widthScale < 0.5f) || (heightScale < 0.5f))) {
+            // must apply blur or the result will look jagged if sacle is smaller then 0.5   
+            // however, if the image is to big, "out of memory" issues may occur
+            double factor = ((image.getWidth() / (widthScale * width)) + (image.getHeight() / (heightScale * height))) / 2.0;
+            int r1 = (int)Math.round(Math.sqrt(3.0 * factor));
+            int r2 = (int)Math.round((factor * factor) / 9.0);
+            int radius = Math.min(r1, r2);     
+            BoxBlurFilter blur = new BoxBlurFilter();
+            blur.setRadius(radius);
+            image = blur.filter(image, null);
+        }
+
         // create the image scaling transformation
         AffineTransform at = AffineTransform.getScaleInstance(widthScale, heightScale);
         AffineTransformOp ato = new AffineTransformOp(at, renderHints);
 
-        // duplicating the image will ensure the color model of the image is RGB / ARGB (for best scaling results)
-        image = duplicateImage(image);
         // must create the result image manually, otherwise the size of the result image may be 1 pixel off
         BufferedImage result = createImage(
             image.getColorModel(),
-            (int)(image.getWidth() * widthScale),
-            (int)(image.getHeight() * heightScale));
+            (int)(width * widthScale),
+            (int)(height * heightScale));
+        result = ato.filter(image, result);
 
-        return ato.filter(image, result);
-    }
-    
-    public BufferedImage applyFilter(BufferedImage image, ImageFilter filter) {
-
-        // apply filter using default AWT toolkit
-        Image img = Toolkit.getDefaultToolkit().createImage(new FilteredImageSource(image.getSource(), filter));
-
-        // use a pixel grabber to retrieve the image's color model;
-        // grabbing a single pixel is usually sufficient
-        PixelGrabber pg = new PixelGrabber(img, 0, 0, 1, 1, false);
-        try {
-            pg.grabPixels();
-        } catch (InterruptedException e) {
-            // ignore
-        }
-
-        // recast the AWT image into a BufferedImage (using alpha RGB)
-        BufferedImage result = new BufferedImage(
-            img.getWidth(null),
-            img.getHeight(null),
-            pg.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
-
-        // draw the generated image to the result canvas and return
-        Graphics2D g = result.createGraphics();
-        g.drawImage(img, 0, 0, null);
-        g.dispose();
+        threadSetNormal();
         return result;
     }
 
-    public BufferedImage applyFilters(BufferedImage image) {
-
-        Iterator i = m_renderSettings.getImageFilters().iterator();
-        while (i.hasNext()) {
-            ImageFilter filter = (ImageFilter)i.next();
-            image = applyFilter(image, filter);
-        }
-        return image;
-    }
-
-    public Rectangle applyFilterDimensions(int width, int height) {
-
-        Rectangle base = new Rectangle(width, height);
-        Iterator i = m_renderSettings.getImageFilters().iterator();
-        while (i.hasNext()) {
-            ImageFilter filter = (ImageFilter)i.next();
-            if (filter instanceof WholeImageFilter) {
-                WholeImageFilter wholeFilter = (WholeImageFilter)filter;
-                base = wholeFilter.getTransformedSpace(base);
-            }
-        }
-        return base;
-    }
-    
     /**
      * Writes an image to a local file.<p>
      * 
@@ -788,23 +893,6 @@ public class Simapi {
         } else {
             result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         }
-        return result;
-    }
-
-    /**
-     * Duplicates a given image, for further modification.<p>
-     * 
-     * @param image the image to duplicate
-     * 
-     * @return the duplicated image
-     */
-    protected BufferedImage duplicateImage(BufferedImage image) {
-
-        BufferedImage result = createImage(image.getColorModel(), image.getWidth(), image.getHeight());
-        Graphics2D g = result.createGraphics();
-        g.drawImage(image, 0, 0, null);
-        g.dispose();
-
         return result;
     }
 
@@ -879,5 +967,30 @@ public class Simapi {
         stream.flush();
         writer.dispose();
         stream.close();
+    }
+
+    private void threadSetNice() {
+
+        Thread t = Thread.currentThread();
+        if (t.getPriority() > m_renderSettings.getThreadNicePriority()) {
+            m_renderSettings.setThreadOldPriority(t.getPriority());
+            try {
+                t.setPriority(m_renderSettings.getThreadNicePriority());
+            } catch (Exception e) {
+                // can't set thread priority, continue with current priority
+            }
+        }
+    }
+
+    private void threadSetNormal() {
+
+        Thread t = Thread.currentThread();
+        if (t.getPriority() != m_renderSettings.getThreadOldPriority()) {
+            try {
+                t.setPriority(m_renderSettings.getThreadOldPriority());
+            } catch (Exception e) {
+                // can't set thread priority, continue with current priority
+            }
+        }
     }
 }

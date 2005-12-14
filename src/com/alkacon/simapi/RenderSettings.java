@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/RenderSettings.java,v $
- * Date   : $Date: 2005/11/21 13:19:13 $
- * Version: $Revision: 1.3 $
+ * Date   : $Date: 2005/12/14 17:14:07 $
+ * Version: $Revision: 1.4 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -63,6 +63,18 @@ public class RenderSettings {
     /** The internal list of image filters to apply to the image. */
     private List m_imageFilters;
 
+    /** Used to control if blur is applied when downscaling an image. */
+    private boolean m_isUseBlur;
+
+    /** The maxmimum image size to apply blur-before-scale (to avoid "out of memory" issues). */
+    private int m_maximumBlurSize;
+
+    /** Thread priority for image operations. */
+    private int m_threadNicePriority;
+
+    /** Stored old thread priority. */
+    private int m_threadOldPriority;
+
     /** The backgound color replacement for the transparent color, used if transparency is not supported by the selected image format. */
     private Color m_transparentReplaceColor;
 
@@ -89,15 +101,18 @@ public class RenderSettings {
             case Simapi.RENDER_SPEED:
                 m_hints = HINTS_SPEED;
                 m_compressionQuality = 0.35f;
+                m_isUseBlur = false;
                 break;
             case Simapi.RENDER_MEDIUM:
                 m_hints = HINTS_MEDIUM;
                 m_compressionQuality = 0.5f;
+                m_isUseBlur = false;
                 break;
             case Simapi.RENDER_QUALITY:
             default:
                 m_hints = HINTS_QUALITY;
                 m_compressionQuality = 0.7f;
+                m_isUseBlur = true;
                 break;
         }
         if (hints != null) {
@@ -109,6 +124,8 @@ public class RenderSettings {
         }
         m_transparentReplaceColor = Color.WHITE;
         m_imageFilters = new ArrayList();
+        m_maximumBlurSize = (1500 * 1500);
+        m_threadNicePriority = Thread.MIN_PRIORITY;
     }
 
     /**
@@ -134,16 +151,6 @@ public class RenderSettings {
                 hints.put(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
                 break;
             case Simapi.RENDER_MEDIUM:
-                hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_DEFAULT);
-                hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_DEFAULT);
-                hints.put(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
-                hints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-                hints.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_DEFAULT);
-                hints.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DEFAULT);
-                hints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT);
-                hints.put(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-                break;
             case Simapi.RENDER_QUALITY:
                 hints.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
                 hints.put(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -196,6 +203,20 @@ public class RenderSettings {
     }
 
     /**
+     * Returns the maximum size of an image that is blurred before applying a downscaling operation.<p>
+     * 
+     * If the image size is to big, "out of memory" errors may occur.
+     * The default is <code>1500 x 1500</code> pixel.<p>
+     * <p>
+     * 
+     * @return the maximum size of an image that is blurred before apply a downscaling operation
+     */
+    public int getMaximumBlurSize() {
+
+        return m_maximumBlurSize;
+    }
+
+    /**
      * Returns the backgound color replacement for the transparent color.<p>
      *
      * This is used if transparency is not supported by the selected image format.<p>
@@ -207,6 +228,18 @@ public class RenderSettings {
     public Color getTransparentReplaceColor() {
 
         return m_transparentReplaceColor;
+    }
+
+    /**
+     * Returns <code>true</code> if blur is used when downscaling an image to a thumbnail.<p>
+     * 
+     * This improves the thumbnail quality, but uses a lot more CPU and memory resources.<p>
+     * 
+     * @return <code>true</code> if blur is used when downscaling an image to a thumbnail
+     */
+    public boolean isUseBlur() {
+
+        return m_isUseBlur;
     }
 
     /**
@@ -224,6 +257,16 @@ public class RenderSettings {
             throw new IllegalArgumentException("compression quality must be between 0.0f and 1.0f");
         }
         m_compressionQuality = compressionQuality;
+    }
+
+    /**
+     * Sets the maximum size of an image that is blurred before applying a downscaling operation.<p>
+     * 
+     * @param maximumBlurSize the maximum size of an image to set
+     */
+    public void setMaximumBlurSize(int maximumBlurSize) {
+
+        m_maximumBlurSize = maximumBlurSize;
     }
 
     /**
@@ -248,5 +291,49 @@ public class RenderSettings {
     protected RenderingHints getRenderingHints() {
 
         return m_hints;
+    }
+
+    /**
+     * Returns the thread priority to use for image operations that require a lot of CPU power.<p> 
+     * 
+     * @return  the thread priority to use for image operations that require a lot of CPU power
+     */
+    protected int getThreadNicePriority() {
+
+        return m_threadNicePriority;
+    }
+
+    /**    
+     * Returns the stored thread priority used.<p> 
+     * 
+     * @return the stored thread priority used
+     */
+    protected int getThreadOldPriority() {
+
+        if (m_threadOldPriority <= 0) {
+            m_threadOldPriority = Thread.NORM_PRIORITY;
+        }
+
+        return m_threadOldPriority;
+    }
+
+    /**
+     * Sets the thread priority to use for image operations that require a lot of CPU power.<p>
+     * 
+     * @param threadNicePriority the thread priority to set
+     */
+    protected void setThreadNicePriority(int threadNicePriority) {
+
+        m_threadNicePriority = threadNicePriority;
+    }
+
+    /**    
+     * Sets the stored thread priority.<p> 
+     * 
+     * @param threadOldPriority the thread priority to store
+     */
+    protected void setThreadOldPriority(int threadOldPriority) {
+
+        m_threadOldPriority = threadOldPriority;
     }
 }

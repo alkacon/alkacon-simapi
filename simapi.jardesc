@@ -9,8 +9,9 @@
 </sealing>
 </manifest>
 <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter.buffered"/>
 <javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter.math"/>
+<javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter"/>
 <javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi"/>
 <javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.filter.fill"/>
 <javaElement handleIdentifier="=AlkaconSimapi/src&lt;com.alkacon.simapi.util"/>
