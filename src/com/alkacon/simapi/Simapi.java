@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2005/12/15 22:05:14 $
- * Version: $Revision: 1.5 $
+ * Date   : $Date: 2006/01/06 15:56:36 $
+ * Version: $Revision: 1.6 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -33,6 +33,7 @@ package com.alkacon.simapi;
 
 import com.alkacon.simapi.filter.WholeImageFilter;
 import com.alkacon.simapi.filter.buffered.BoxBlurFilter;
+import com.alkacon.simapi.filter.buffered.GaussianFilter;
 import com.alkacon.simapi.util.GifImageWriterSpi;
 import com.alkacon.simapi.util.Quantize;
 
@@ -804,18 +805,24 @@ public class Simapi {
 
         threadSetNice();
 
+        double factor = ((image.getWidth() / (widthScale * width)) + (image.getHeight() / (heightScale * height))) / 2.0;
         if (m_renderSettings.isUseBlur()
             && ((width * height) < m_renderSettings.getMaximumBlurSize())
             && ((widthScale < 0.5f) || (heightScale < 0.5f))) {
             // must apply blur or the result will look jagged if sacle is smaller then 0.5   
             // however, if the image is to big, "out of memory" issues may occur
-            double factor = ((image.getWidth() / (widthScale * width)) + (image.getHeight() / (heightScale * height))) / 2.0;
-            int r1 = (int)Math.round(Math.sqrt(3.0 * factor));
-            int r2 = (int)Math.round((factor * factor) / 9.0);
-            int radius = Math.min(r1, r2);     
-            BoxBlurFilter blur = new BoxBlurFilter();
-            blur.setRadius(radius);
-            image = blur.filter(image, null);
+            if (((width + height) / 2) < 800) {
+                // image is not to large - use gaussion blur 
+                GaussianFilter gauss = new GaussianFilter();
+                gauss.setRadius((float)Math.sqrt(2.0 * factor));
+                image = gauss.filter(image, null);
+            } else {
+                // image is rather large, use much faster box blur
+                int radius = (int)Math.round(Math.sqrt(factor));
+                BoxBlurFilter blur = new BoxBlurFilter();
+                blur.setRadius(radius);
+                image = blur.filter(image, null);
+            }
         }
 
         // create the image scaling transformation

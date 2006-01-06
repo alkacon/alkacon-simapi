@@ -4,9 +4,10 @@
 
 package com.alkacon.simapi.filter.buffered;
 
-import java.awt.*;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.image.BandCombineOp;
+import java.awt.image.BufferedImage;
 
 public class RaysFilter extends MotionBlurFilter {
 

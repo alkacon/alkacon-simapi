@@ -6,9 +6,8 @@ package com.alkacon.simapi.filter.buffered;
 
 import com.alkacon.simapi.filter.PixelUtils;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.Kernel;
 
 public class SmartBlurFilter extends AbstractBufferedImageOp {
 

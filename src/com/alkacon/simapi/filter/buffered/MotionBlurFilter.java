@@ -4,11 +4,11 @@
 
 package com.alkacon.simapi.filter.buffered;
 
-import com.alkacon.simapi.filter.ImageMath;
 import com.alkacon.simapi.filter.PixelUtils;
 
-import java.awt.image.*;
-import java.awt.geom.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 
 public class MotionBlurFilter extends AbstractBufferedImageOp {
 

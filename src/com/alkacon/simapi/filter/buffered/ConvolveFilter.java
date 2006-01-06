@@ -6,9 +6,13 @@ package com.alkacon.simapi.filter.buffered;
 
 import com.alkacon.simapi.filter.PixelUtils;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.awt.geom.*;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.Kernel;
 
 /**
  * A filter which applies a convolution kernel to an image.
@@ -84,11 +88,11 @@ public class ConvolveFilter extends AbstractBufferedImageOp {
 
         int[] inPixels = new int[width*height];
         int[] outPixels = new int[width*height];
-        src.getRGB( 0, 0, width, height, inPixels, 0, width );
+        getRGB( src, 0, 0, width, height, inPixels );
 
         convolve(kernel, inPixels, outPixels, width, height, alpha, edgeAction);
 
-        dst.setRGB( 0, 0, width, height, inPixels, 0, width );
+        setRGB( dst, 0, 0, width, height, outPixels );
         return dst;
     }
 
@@ -202,13 +206,16 @@ public class ConvolveFilter extends AbstractBufferedImageOp {
 
                     if (f != 0) {
                         int ix = x+col;
-                        if (!(0 <= ix && ix < width)) {
+                        if ( ix < 0 ) {
                             if ( edgeAction == CLAMP_EDGES )
-                                ix = x;
+                                ix = 0;
                             else if ( edgeAction == WRAP_EDGES )
                                 ix = (x+width) % width;
-                            else
-                                continue;
+                        } else if ( ix >= width) {
+                            if ( edgeAction == CLAMP_EDGES )
+                                ix = width-1;
+                            else if ( edgeAction == WRAP_EDGES )
+                                ix = (x+width) % width;
                         }
                         int rgb = inPixels[ioffset+ix];
                         a += f * ((rgb >> 24) & 0xff);
@@ -242,14 +249,23 @@ public class ConvolveFilter extends AbstractBufferedImageOp {
                 for (int row = -rows2; row <= rows2; row++) {
                     int iy = y+row;
                     int ioffset;
-                    if (0 <= iy && iy < height)
+                    if ( iy < 0 ) {
+                        if ( edgeAction == CLAMP_EDGES )
+                            ioffset = 0;
+                        else if ( edgeAction == WRAP_EDGES )
+                            ioffset = ((y+height) % height)*width;
+                        else
+                            ioffset = iy*width;
+                    } else if ( iy >= height) {
+                        if ( edgeAction == CLAMP_EDGES )
+                            ioffset = (height-1)*width;
+                        else if ( edgeAction == WRAP_EDGES )
+                            ioffset = ((y+height) % height)*width;
+                        else
+                            ioffset = iy*width;
+                    } else
                         ioffset = iy*width;
-                    else if ( edgeAction == CLAMP_EDGES )
-                        ioffset = y*width;
-                    else if ( edgeAction == WRAP_EDGES )
-                        ioffset = ((iy+height) % height) * width;
-                    else
-                        continue;
+
                     float f = matrix[row+rows2];
 
                     if (f != 0) {

@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2005/12/14 17:14:07 $
- * Version: $Revision: 1.5 $
+ * Date   : $Date: 2006/01/06 15:56:36 $
+ * Version: $Revision: 1.6 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -195,6 +195,8 @@ public class TestSimapi extends VisualTestCase {
         read = Simapi.read(input);
         read = simapi.resize(read, 800, 600, false);
         checkImage(new BufferedImage[] {read}, "Has it been read?");
+        assertEquals(800, read.getWidth());
+        assertEquals(600, read.getHeight());
 
         GrayscaleFilter grayscaleFilter = new GrayscaleFilter();
         BufferedImage gray = simapi.applyFilter(read, grayscaleFilter);
@@ -263,18 +265,32 @@ public class TestSimapi extends VisualTestCase {
 
         Simapi simapi = new Simapi();
 
-        BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
-
         RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
         settings.setCompressionQuality(0.85f);
 
+        BufferedImage img1 = Simapi.read(getClass().getResource("_1_or.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("_2_or.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("_3_or.jpg"));
+        
+        BufferedImage img1Tn = Simapi.read(getClass().getResource("_1_tn.jpg"));
+        BufferedImage img2Tn = Simapi.read(getClass().getResource("_2_tn.jpg"));
+        BufferedImage img3Tn = Simapi.read(getClass().getResource("_3_tn.jpg"));
+        
+        img1 = simapi.resize(img1, 75, 113, Color.RED, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
+
+        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough?");        
+        
+        BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
+        
         BufferedImage imgA = simapi.resize(imgOri, 600, 450, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgB = simapi.resize(imgOri, 400, 300, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgC = simapi.resize(imgOri, 300, 225, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgD = simapi.resize(imgOri, 200, 150, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgE = simapi.resize(imgOri, 150, 113, Color.RED, Simapi.POS_CENTER);
 
-        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");
+        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");        
     }
 
     /**
