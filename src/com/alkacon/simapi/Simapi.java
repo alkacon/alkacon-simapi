@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2006/01/06 15:56:36 $
- * Version: $Revision: 1.6 $
+ * Date   : $Date: 2006/02/13 16:38:46 $
+ * Version: $Revision: 1.7 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -832,8 +832,8 @@ public class Simapi {
         // must create the result image manually, otherwise the size of the result image may be 1 pixel off
         BufferedImage result = createImage(
             image.getColorModel(),
-            (int)(width * widthScale),
-            (int)(height * heightScale));
+            Math.round(width * widthScale),
+            Math.round(height * heightScale));
         result = ato.filter(image, result);
 
         threadSetNormal();
