@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/RenderSettings.java,v $
- * Date   : $Date: 2005/12/14 17:14:07 $
- * Version: $Revision: 1.4 $
+ * Date   : $Date: 2006/05/02 13:18:12 $
+ * Version: $Revision: 1.5 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -124,7 +124,7 @@ public class RenderSettings {
         }
         m_transparentReplaceColor = Color.WHITE;
         m_imageFilters = new ArrayList();
-        m_maximumBlurSize = (1500 * 1500);
+        m_maximumBlurSize = (2500 * 2500);
         m_threadNicePriority = Thread.MIN_PRIORITY;
     }
 
@@ -206,7 +206,7 @@ public class RenderSettings {
      * Returns the maximum size of an image that is blurred before applying a downscaling operation.<p>
      * 
      * If the image size is to big, "out of memory" errors may occur.
-     * The default is <code>1500 x 1500</code> pixel.<p>
+     * The default is <code>2500 x 2500</code> pixel.<p>
      * <p>
      * 
      * @return the maximum size of an image that is blurred before apply a downscaling operation

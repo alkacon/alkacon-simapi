@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2006/02/13 16:38:46 $
- * Version: $Revision: 1.7 $
+ * Date   : $Date: 2006/05/02 13:18:12 $
+ * Version: $Revision: 1.8 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -812,7 +812,7 @@ public class Simapi {
             // must apply blur or the result will look jagged if sacle is smaller then 0.5   
             // however, if the image is to big, "out of memory" issues may occur
             if (((width + height) / 2) < 800) {
-                // image is not to large - use gaussion blur 
+                // image is quite small - use gaussion blur 
                 GaussianFilter gauss = new GaussianFilter();
                 gauss.setRadius((float)Math.sqrt(2.0 * factor));
                 image = gauss.filter(image, null);
