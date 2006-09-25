@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2006/05/02 13:18:12 $
- * Version: $Revision: 1.8 $
+ * Date   : $Date: 2006/09/25 07:42:09 $
+ * Version: $Revision: 1.9 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -312,7 +312,7 @@ public class Simapi {
                 // image already uses a system compatible color model, no need for transformation
                 return image;
             default:
-        // image must be transformed to system color
+                // image must be transformed to system color
         }
 
         BufferedImage result;
@@ -636,21 +636,29 @@ public class Simapi {
         // check if the image fits after rescale
         int scaledWidth = scaled.getWidth();
         int scaledHeight = scaled.getHeight();
+
+        // check the background color
+        ColorModel cm = scaled.getColorModel();
+        if (!cm.hasAlpha() && (backgroundColor == COLOR_TRANSPARENT)) {
+            // alpha not supported by target color model
+            backgroundColor = m_renderSettings.getTransparentReplaceColor();
+        }
+
         if ((scaledWidth == width) && (scaledHeight == height)) {
-            // no resize required
-            return scaled;
+            if (image.getColorModel().hasAlpha() && (backgroundColor != COLOR_TRANSPARENT)) {
+                // background color replacement may be required
+                position = Simapi.POS_UP_LEFT;
+            } else {
+                // no resize required and also no background color change
+                return scaled;
+            }
         }
 
         threadSetNice();
 
         // create the background image
-        ColorModel cm = scaled.getColorModel();
         BufferedImage result = createImage(scaled.getColorModel(), width, height);
         Graphics2D g = result.createGraphics();
-        if (!cm.hasAlpha() && (backgroundColor == COLOR_TRANSPARENT)) {
-            // alpha not supported by target color model
-            backgroundColor = m_renderSettings.getTransparentReplaceColor();
-        }
         if (backgroundColor != COLOR_TRANSPARENT) {
             // don't fill if background is transparent
             g.setPaintMode();
@@ -830,10 +838,8 @@ public class Simapi {
         AffineTransformOp ato = new AffineTransformOp(at, renderHints);
 
         // must create the result image manually, otherwise the size of the result image may be 1 pixel off
-        BufferedImage result = createImage(
-            image.getColorModel(),
-            Math.round(width * widthScale),
-            Math.round(height * heightScale));
+        BufferedImage result = createImage(image.getColorModel(), Math.round(width * widthScale), Math.round(height
+            * heightScale));
         result = ato.filter(image, result);
 
         threadSetNormal();

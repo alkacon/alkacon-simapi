@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/Quantize.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2006/09/25 07:42:09 $
+ * Version: $Revision: 1.2 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -552,7 +552,7 @@ public class Quantize {
         /**
          * The result of a closest color search.<p>
          */
-        private static class Search {
+        static class Search {
 
             /** The color index. */
             int colorIndex;
@@ -595,7 +595,7 @@ public class Quantize {
          * @param maxColors the maximum colors
          * @param alphaToBitmask indicates if the alpha mask should be kept
          */
-        private Cube(BufferedImage source, int[] pixels, int maxColors, boolean alphaToBitmask) {
+        Cube(BufferedImage source, int[] pixels, int maxColors, boolean alphaToBitmask) {
 
             this.m_source = source;
             this.m_pixels = pixels;
@@ -657,16 +657,20 @@ public class Quantize {
 
             // determine bit depth for palette
             int dep;
-            for (dep = 1; dep <= 8; dep++)
-                if ((1 << dep) >= m_numColors)
+            for (dep = 1; dep <= 8; dep++) {
+                if ((1 << dep) >= m_numColors) {
                     break;
+                }
+            }
 
             // create the right color model, depending on transparency settings:
             IndexColorModel icm;
             if (m_alphaToBitmask) {
-                if (addTransparency)
+                if (addTransparency) {
                     icm = new IndexColorModel(dep, m_numColors, colorMap[0], colorMap[1], colorMap[2], 0);
-                else icm = new IndexColorModel(dep, m_numColors, colorMap[0], colorMap[1], colorMap[2]);
+                } else {
+                    icm = new IndexColorModel(dep, m_numColors, colorMap[0], colorMap[1], colorMap[2]);
+                }
             } else {
                 icm = new IndexColorModel(dep, m_numColors, colorMap[0], colorMap[1], colorMap[2], colorMap[3]);
             }
@@ -688,8 +692,9 @@ public class Quantize {
                 int blue = (pixel >> 0) & 0xff;
                 int alpha = (pixel >> 24) & 0xff;
 
-                if (m_alphaToBitmask)
+                if (m_alphaToBitmask) {
                     alpha = alpha < 128 ? 0 : 0xff;
+                }
 
                 // this is super weird: on some systems, transparent pixels are
                 // not calculated correctly if the following block is taken out.
@@ -706,7 +711,7 @@ public class Quantize {
                     String.valueOf(alpha);
                 }
 
-                if (alpha == 0 && addTransparency) {
+                if ((alpha == 0) && addTransparency) {
                     dst[i] = 0; // transparency color is at 0
                 } else {
                     // walk the tree to find the cube containing that color
@@ -743,8 +748,9 @@ public class Quantize {
                 int green = (pixel >> 8) & 0xff;
                 int blue = (pixel >> 0) & 0xff;
                 int alpha = (pixel >> 24) & 0xff;
-                if (m_alphaToBitmask)
+                if (m_alphaToBitmask) {
                     alpha = alpha < 0x80 ? 0 : 0xff;
+                }
 
                 if (alpha > 0) {
                     // a hard limit on the number of nodes in the tree

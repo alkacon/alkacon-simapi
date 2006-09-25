@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2006/01/06 15:56:36 $
- * Version: $Revision: 1.6 $
+ * Date   : $Date: 2006/09/25 07:42:09 $
+ * Version: $Revision: 1.7 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -72,7 +72,7 @@ public class TestSimapi extends VisualTestCase {
      * 
      * @throws Exception if the test fails
      */
-    public void testBadSacleQualityIssue() throws Exception {
+    public void testBadScaleQualityIssue() throws Exception {
 
         Simapi simapi = new Simapi();
 
@@ -271,26 +271,26 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage img1 = Simapi.read(getClass().getResource("_1_or.jpg"));
         BufferedImage img2 = Simapi.read(getClass().getResource("_2_or.jpg"));
         BufferedImage img3 = Simapi.read(getClass().getResource("_3_or.jpg"));
-        
+
         BufferedImage img1Tn = Simapi.read(getClass().getResource("_1_tn.jpg"));
         BufferedImage img2Tn = Simapi.read(getClass().getResource("_2_tn.jpg"));
         BufferedImage img3Tn = Simapi.read(getClass().getResource("_3_tn.jpg"));
-        
+
         img1 = simapi.resize(img1, 75, 113, Color.RED, Simapi.POS_CENTER);
         img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
         img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
 
-        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough?");        
-        
+        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough?");
+
         BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
-        
+
         BufferedImage imgA = simapi.resize(imgOri, 600, 450, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgB = simapi.resize(imgOri, 400, 300, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgC = simapi.resize(imgOri, 300, 225, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgD = simapi.resize(imgOri, 200, 150, Color.RED, Simapi.POS_CENTER);
         BufferedImage imgE = simapi.resize(imgOri, 150, 113, Color.RED, Simapi.POS_CENTER);
 
-        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");        
+        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");
     }
 
     /**
@@ -399,8 +399,8 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage img1 = Simapi.read(getClass().getResource("screen1.png"));
         result = simapi.scale(img1, 0.75f);
         checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 75%?");
-        assertEquals((int)(img1.getWidth() * 0.75f), result.getWidth());
-        assertEquals((int)(img1.getHeight() * 0.75f), result.getHeight());
+        assertEquals(Math.round(img1.getWidth() * 0.75f), result.getWidth());
+        assertEquals(Math.round(img1.getHeight() * 0.75f), result.getHeight());
 
         BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
         result = simapi.resize(img2, 100, 50);
@@ -414,7 +414,7 @@ public class TestSimapi extends VisualTestCase {
 
         checkImage(new BufferedImage[] {img3, result}, "Has it been resized to 400x300 pixel with aspect intact?");
         assertEquals(400, result.getWidth());
-        assertEquals(254, result.getHeight()); // aspect ratio height is 254
+        assertEquals(255, result.getHeight()); // aspect ratio height is 255
     }
 
     /**
@@ -520,6 +520,14 @@ public class TestSimapi extends VisualTestCase {
             "Has it been scaled to 75x27 pixel and saved as GIF with transparent background ok?");
         assertEquals(75, read.getWidth());
         assertEquals(27, read.getHeight()); // aspect ratio kept intact
+
+        result = simapi.resize(img1, 75, 27, Color.RED, Simapi.POS_CENTER);
+        destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved1b.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        read = Simapi.read(destination);
+        checkImage(
+            new BufferedImage[] {img1, read},
+            "Has it been scaled to 75x27 pixel and saved as GIF with transparent background replaced by red?");
 
         result = simapi.resize(img1, 75, 75, false);
         destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved2.gif");
