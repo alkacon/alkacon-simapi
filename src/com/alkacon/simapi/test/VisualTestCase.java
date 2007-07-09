@@ -49,6 +49,7 @@ package com.alkacon.simapi.test;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -201,9 +202,9 @@ public class VisualTestCase extends TestCase {
 
         final Thread curr = Thread.currentThread();
         m_message = message;
-        final JFrame jf = new JFrame(message);
+        final JFrame jf = new JFrame("Simapi test case window");
         jf.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        jf.getContentPane().add(new JLabel(message, SwingConstants.CENTER), BorderLayout.NORTH);
+        jf.getContentPane().add(new JLabel("  " + m_message, SwingConstants.LEFT), BorderLayout.NORTH);
         final JPanel imgPanel = new JPanel();
         ImagePanel sp = null;
 
@@ -217,7 +218,7 @@ public class VisualTestCase extends TestCase {
         }
 
         final JScrollPane js = new JScrollPane(imgPanel);
-        jf.getContentPane().add(js, BorderLayout.CENTER);
+        jf.getContentPane().add(js, BorderLayout.SOUTH);
 
         final PerformAction pa = new PerformAction(jf, curr);
         final Thread listenerThread = new Thread(pa);
@@ -242,10 +243,10 @@ public class VisualTestCase extends TestCase {
         yes.addActionListener(cl);
         no.addActionListener(cl);
 
-        final JPanel optionPanel = new JPanel();
+        final JPanel optionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         optionPanel.add(yes);
         optionPanel.add(no);
-        jf.getContentPane().add(optionPanel, BorderLayout.SOUTH);
+        jf.getContentPane().add(optionPanel, BorderLayout.CENTER);
 
         jf.pack();
         jf.show();
