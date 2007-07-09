@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2006/09/25 07:42:09 $
- * Version: $Revision: 1.7 $
+ * Date   : $Date: 2007/07/09 15:04:26 $
+ * Version: $Revision: 1.8 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -66,7 +66,34 @@ public class TestSimapi extends VisualTestCase {
 
         super(params);
     }
-
+    
+    /**
+     * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testScreenShotScaling() throws Exception {
+        
+        Simapi simapi = new Simapi();
+        BufferedImage result;
+        
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 405, true);                
+        checkImage(
+            new BufferedImage[] {img1, result},
+            "Has it been scaled to 540x405 pixel in good quality?");        
+        
+        input = new File(getClass().getResource("screen_1280.png").getPath());
+        imgBytes = readFile(input);
+        img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 432, true);                
+        checkImage(
+            new BufferedImage[] {img1, result},
+            "Has it been scaled to 540x432 pixel in good quality?");
+    }
+    
     /**
      * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
      * 
@@ -88,6 +115,46 @@ public class TestSimapi extends VisualTestCase {
         img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
+    }    
+    
+//    /**
+//     * Stops the test.<p>
+//     * 
+//     * Uncomment in case only a few selected tests should be performed.<p>
+//     */
+//    public void testStop() {        
+//        
+//        System.exit(0);
+//    }
+
+    /**
+     * Tests an issue with JDK 6 and GIF image processing.<p>
+     * 
+     * In a JDK 6 a GIF writer has been introduced. While this is 
+     * great in general, we already have our own implementation. Actually it appears that 
+     * the JDK default writer has an issue or at least behaves differently when scaling images 
+     * that contain transparent pixels.
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testGIFProcessing() throws Exception {
+        
+        Simapi simapi = new Simapi();
+        BufferedImage result;
+        
+        File input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        result = simapi.resize(img1, 75, 75, true);
+        File destination = new File(input.getParentFile(), "logo_alkacon_150_t_saved1.gif");
+        simapi.write(result, destination, Simapi.TYPE_GIF);
+        BufferedImage read = Simapi.read(destination);
+        checkImage(
+            new BufferedImage[] {img1, read},
+            "Has it been scaled to 75x27 pixel and saved as GIF with transparent background ok?");
+        assertEquals(75, read.getWidth());
+        assertEquals(27, read.getHeight()); // aspect ratio kept intact
     }
 
     /**
@@ -280,7 +347,7 @@ public class TestSimapi extends VisualTestCase {
         img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
         img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
 
-        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough?");
+        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough? (Left: Simapi / Right: Photoshop)");
 
         BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
 
@@ -488,7 +555,7 @@ public class TestSimapi extends VisualTestCase {
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed center, down left, up right");
     }
-
+    
     /**
      * Tests resizing a transparent image.<p>
      * 

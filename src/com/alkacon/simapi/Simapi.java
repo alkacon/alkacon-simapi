@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2006/09/25 07:42:09 $
- * Version: $Revision: 1.9 $
+ * Date   : $Date: 2007/07/09 15:04:26 $
+ * Version: $Revision: 1.10 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -66,6 +66,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.stream.ImageOutputStream;
 
 /**
@@ -157,9 +158,31 @@ public class Simapi {
      * Register the GIF encoder.<p>
      */
     static {
-
-        // register the GIF encoder with the Java ImageIO registry
-        IIORegistry.getDefaultInstance().registerServiceProvider(new GifImageWriterSpi());
+        // register the Alkacon GIF encoder with the Java ImageIO registry
+        ImageWriterSpi alkaconGifSpi = new GifImageWriterSpi();
+        IIORegistry.getDefaultInstance().registerServiceProvider(alkaconGifSpi);
+        Iterator i = null;
+        try {
+            i = IIORegistry.getDefaultInstance().getServiceProviders(ImageWriterSpi.class, true);
+        } catch (Throwable t) {
+            t.printStackTrace(System.err);
+        }
+        if (i != null) {
+            while (i.hasNext()) {
+                ImageWriterSpi spi = (ImageWriterSpi)i.next();
+                if (spi.getClass() != GifImageWriterSpi.class) {
+                    String[] formats = spi.getFormatNames();
+                    for (int j = 0; j < formats.length; j++) {
+                        String format = formats[j];
+                        if ("gif".equals(format.toLowerCase())) {
+                            // the SPI can write GIFs, change order so that Alkacons SPI comes first
+                            IIORegistry.getDefaultInstance().setOrdering(ImageWriterSpi.class, alkaconGifSpi, spi);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -816,8 +839,9 @@ public class Simapi {
         double factor = ((image.getWidth() / (widthScale * width)) + (image.getHeight() / (heightScale * height))) / 2.0;
         if (m_renderSettings.isUseBlur()
             && ((width * height) < m_renderSettings.getMaximumBlurSize())
-            && ((widthScale < 0.5f) || (heightScale < 0.5f))) {
-            // must apply blur or the result will look jagged if sacle is smaller then 0.5   
+            && ((widthScale < 0.575f) || (heightScale < 0.575f))) {
+            // must apply blur or the result will look jagged if scale is smaller then 0.5   
+            // (actually close to 0.5 it also looks jagged, so we use 0.575 instead)
             // however, if the image is to big, "out of memory" issues may occur
             if (((width + height) / 2) < 800) {
                 // image is quite small - use gaussion blur 
@@ -826,7 +850,16 @@ public class Simapi {
                 image = gauss.filter(image, null);
             } else {
                 // image is rather large, use much faster box blur
-                int radius = (int)Math.round(Math.sqrt(factor));
+                double root = Math.sqrt(factor);
+                int radius;
+                if (factor < 2.5d) {
+                    // this is a rather small scale factor, use Math.floor() or image might get blurry
+                    radius = (int)Math.floor(root);
+                } else {
+                    // scale factor is rather large, use Math.round() for better result
+                    radius = (int)Math.round(root);
+                }
+                // int radius = (int)Math.round(root);
                 BoxBlurFilter blur = new BoxBlurFilter();
                 blur.setRadius(radius);
                 image = blur.filter(image, null);
@@ -971,6 +1004,10 @@ public class Simapi {
         if (param.canWriteCompressed()) {
             // set compression parameters if supported by writer
             param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            if ((param.getCompressionTypes() != null) && (param.getCompressionType() == null)) {
+                // a compression parameter is required but not provided, use the first one available
+                param.setCompressionType(param.getCompressionTypes()[0]);
+            }
             param.setCompressionQuality(m_renderSettings.getCompressionQuality());
         }
 
