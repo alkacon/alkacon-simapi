@@ -1,0 +1,1 @@
+package com.alkacon.simapi.filter.fill;public interface PixelCompareOp {	public boolean thisPixel(int x, int y);}

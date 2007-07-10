@@ -1,0 +1,1 @@
+/* * Copyright (C) Jerry Huxtable 1998 */package com.alkacon.simapi.filter.math;public interface Function1D {	public float evaluate(float v);}
