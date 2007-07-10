@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2007/07/09 15:04:26 $
- * Version: $Revision: 1.10 $
+ * Date   : $Date: 2007/07/10 09:23:42 $
+ * Version: $Revision: 1.11 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -843,23 +843,24 @@ public class Simapi {
             // must apply blur or the result will look jagged if scale is smaller then 0.5   
             // (actually close to 0.5 it also looks jagged, so we use 0.575 instead)
             // however, if the image is to big, "out of memory" issues may occur
-            if (((width + height) / 2) < 800) {
-                // image is quite small - use gaussion blur 
+            int average = (width + height) / 2;
+            if ((factor < 5.0) && (average < 900)){
+                // image is quite small and suitable factor - use gaussian blur 
                 GaussianFilter gauss = new GaussianFilter();
-                gauss.setRadius((float)Math.sqrt(2.0 * factor));
+                double radius = Math.sqrt(2.0 * factor);
+                gauss.setRadius((float)radius);
                 image = gauss.filter(image, null);
             } else {
                 // image is rather large, use much faster box blur
                 double root = Math.sqrt(factor);
                 int radius;
-                if (factor < 2.5d) {
+                if (factor < 2.5) {
                     // this is a rather small scale factor, use Math.floor() or image might get blurry
                     radius = (int)Math.floor(root);
                 } else {
                     // scale factor is rather large, use Math.round() for better result
                     radius = (int)Math.round(root);
                 }
-                // int radius = (int)Math.round(root);
                 BoxBlurFilter blur = new BoxBlurFilter();
                 blur.setRadius(radius);
                 image = blur.filter(image, null);

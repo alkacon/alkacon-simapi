@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2007/07/09 15:04:26 $
- * Version: $Revision: 1.8 $
+ * Date   : $Date: 2007/07/10 09:23:42 $
+ * Version: $Revision: 1.9 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -94,6 +94,16 @@ public class TestSimapi extends VisualTestCase {
             "Has it been scaled to 540x432 pixel in good quality?");
     }
     
+//    /**
+//     * Stops the test.<p>
+//     * 
+//     * Uncomment in case only a few selected tests should be performed.<p>
+//     */
+//    public void testStop() {        
+//        
+//        System.exit(0);
+//    }
+    
     /**
      * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
      * 
@@ -116,16 +126,6 @@ public class TestSimapi extends VisualTestCase {
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
     }    
-    
-//    /**
-//     * Stops the test.<p>
-//     * 
-//     * Uncomment in case only a few selected tests should be performed.<p>
-//     */
-//    public void testStop() {        
-//        
-//        System.exit(0);
-//    }
 
     /**
      * Tests an issue with JDK 6 and GIF image processing.<p>
