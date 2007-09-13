@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jardesc>
-<jar path="C:/Dev/workspace/OpenCmsHEAD/webapp/WEB-INF/lib/alkacon-simapi-0.9.5.jar"/>
+<jar path="C:/Dev/workspace/OpenCmsHEAD/lib/runtime/alkacon-simapi-0.9.6.jar"/>
 <options buildIfNeeded="true" compress="true" descriptionLocation="/AlkaconSimapi/simapi.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="true" overwrite="false" saveDescription="true" useSourceFolders="false"/>
 <manifest generateManifest="false" manifestLocation="/AlkaconSimapi/manifest.txt" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
 <sealing sealJar="false">
