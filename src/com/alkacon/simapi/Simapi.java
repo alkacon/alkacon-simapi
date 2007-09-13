@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2007/07/10 09:23:42 $
- * Version: $Revision: 1.11 $
+ * Date   : $Date: 2007/09/13 09:10:37 $
+ * Version: $Revision: 1.12 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -603,15 +603,19 @@ public class Simapi {
         float widthScale = (width / (float)imageWidth);
         float heightScale = (height / (float)imageHeight);
 
+        int targetWidth = width;
+        int targetHeight = height;
         if (bestfit) {
             // keep image aspect ratio, find best scale for the result image
-            if (widthScale <= heightScale) {
+            if (widthScale < heightScale) {
                 heightScale = widthScale;
-            } else {
+                targetHeight = (int)(imageHeight * heightScale);
+            } else if (widthScale > heightScale) {
                 widthScale = heightScale;
+                targetWidth = (int)(imageWidth * widthScale);
             }
         }
-        return scale(image, widthScale, heightScale);
+        return scale(image, widthScale, heightScale, targetWidth, targetHeight);
     }
 
     /**
@@ -810,11 +814,38 @@ public class Simapi {
      * 
      * @param image the image to scale
      * @param widthScale the scale factor for the width
-     * @param heightScale the sacle factor for the height
+     * @param heightScale the scale factor for the height
      * 
      * @return the transformed image
      */
     public BufferedImage scale(BufferedImage image, float widthScale, float heightScale) {
+
+        int targetWidth = (int)(image.getWidth() * widthScale);
+        int targetHeight = (int)(image.getHeight() * heightScale);
+
+        return scale(image, widthScale, heightScale, targetWidth, targetHeight);
+    }
+
+    /**
+     * Scale the image with different ratios along the width and height to the given target dimensions.<p>
+     * 
+     * Giving both scale factor and target dimensions is required to avoid rounding errors that 
+     * lead to the "missing line" issue.<p>
+     * 
+     * @param image the image to scale
+     * @param widthScale the scale factor for the width
+     * @param heightScale the scale factor for the height
+     * @param targetWidth the width of the target image
+     * @param targetHeight the height of the target image
+     * 
+     * @return the transformed image
+     */
+    public BufferedImage scale(
+        BufferedImage image,
+        float widthScale,
+        float heightScale,
+        int targetWidth,
+        int targetHeight) {
 
         int width = image.getWidth();
         int height = image.getHeight();
@@ -844,7 +875,7 @@ public class Simapi {
             // (actually close to 0.5 it also looks jagged, so we use 0.575 instead)
             // however, if the image is to big, "out of memory" issues may occur
             int average = (width + height) / 2;
-            if ((factor < 5.0) && (average < 900)){
+            if ((factor < 5.0) && (average < 900)) {
                 // image is quite small and suitable factor - use gaussian blur 
                 GaussianFilter gauss = new GaussianFilter();
                 double radius = Math.sqrt(2.0 * factor);
@@ -872,8 +903,7 @@ public class Simapi {
         AffineTransformOp ato = new AffineTransformOp(at, renderHints);
 
         // must create the result image manually, otherwise the size of the result image may be 1 pixel off
-        BufferedImage result = createImage(image.getColorModel(), Math.round(width * widthScale), Math.round(height
-            * heightScale));
+        BufferedImage result = createImage(image.getColorModel(), targetWidth, targetHeight);
         result = ato.filter(image, result);
 
         threadSetNormal();

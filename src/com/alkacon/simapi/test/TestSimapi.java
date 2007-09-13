@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2007/07/10 09:23:42 $
- * Version: $Revision: 1.9 $
+ * Date   : $Date: 2007/09/13 09:10:37 $
+ * Version: $Revision: 1.10 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -39,6 +39,8 @@ import com.alkacon.simapi.filter.LinearColormap;
 import com.alkacon.simapi.filter.LookupFilter;
 import com.alkacon.simapi.filter.ShadowFilter;
 
+import org.opencms.loader.CmsImageScaler;
+
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -66,44 +68,43 @@ public class TestSimapi extends VisualTestCase {
 
         super(params);
     }
-    
+
+    //    /**
+    //     * Stops the test.<p>
+    //     * 
+    //     * Uncomment in case only a few selected tests should be performed.<p>
+    //     */
+    //    public void testStop() {
+    //
+    //        System.exit(0);
+    //    }
+
     /**
-     * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
+     * Tests an issue with JDK 6 and GIF image processing.<p>
+     * 
+     * In a JDK 6 a GIF writer has been introduced. While this is 
+     * great in general, we already have our own implementation. Actually it appears that 
+     * the JDK default writer has an issue or at least behaves differently when scaling images 
+     * that contain transparent pixels.
      * 
      *  @throws Exception if the test fails
      */
-    public void testScreenShotScaling() throws Exception {
-        
-        Simapi simapi = new Simapi();
-        BufferedImage result;
-        
-        File input = new File(getClass().getResource("screen_1024.png").getPath());
+    public void testMissingLineIssue() throws Exception {
+
+        File input = new File(getClass().getResource("verm.gif").getPath());
         byte[] imgBytes = readFile(input);
         BufferedImage img1 = Simapi.read(imgBytes);
-        result = simapi.resize(img1, 540, 405, true);                
-        checkImage(
-            new BufferedImage[] {img1, result},
-            "Has it been scaled to 540x405 pixel in good quality?");        
-        
-        input = new File(getClass().getResource("screen_1280.png").getPath());
-        imgBytes = readFile(input);
-        img1 = Simapi.read(imgBytes);
-        result = simapi.resize(img1, 540, 432, true);                
-        checkImage(
-            new BufferedImage[] {img1, result},
-            "Has it been scaled to 540x432 pixel in good quality?");
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:100,h:100,t:3");
+        byte[] scaled = scaler.scaleImage(imgBytes, "verm.gif");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'missing line' issue solved?");
+        assertEquals(100, img2.getWidth());
+        assertEquals(98, img2.getHeight()); // aspect ratio kept intact
     }
-    
-//    /**
-//     * Stops the test.<p>
-//     * 
-//     * Uncomment in case only a few selected tests should be performed.<p>
-//     */
-//    public void testStop() {        
-//        
-//        System.exit(0);
-//    }
-    
+
     /**
      * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
      * 
@@ -125,7 +126,51 @@ public class TestSimapi extends VisualTestCase {
         img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
-    }    
+    }
+
+    /**
+     * Tests resizing a transparent image.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testScaleTransparentIssue() throws Exception {
+
+        File input = new File(getClass().getResource("logo_alkacon_160_t.png").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:160,h:90,t:4,q:85");
+        byte[] scaled = scaler.scaleImage(imgBytes, "logo_alkacon_160_t.png");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(
+            new BufferedImage[] {img1, img2},
+            "Has it been scaled to 160x52 pixel and saved as PNG with transparent background ok?");
+    }
+
+    /**
+     * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testScreenShotScaling() throws Exception {
+
+        Simapi simapi = new Simapi();
+        BufferedImage result;
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 405, true);
+        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x405 pixel in good quality?");
+
+        input = new File(getClass().getResource("screen_1280.png").getPath());
+        imgBytes = readFile(input);
+        img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 432, true);
+        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x432 pixel in good quality?");
+    }
 
     /**
      * Tests an issue with JDK 6 and GIF image processing.<p>
@@ -138,10 +183,10 @@ public class TestSimapi extends VisualTestCase {
      *  @throws Exception if the test fails
      */
     public void testGIFProcessing() throws Exception {
-        
+
         Simapi simapi = new Simapi();
         BufferedImage result;
-        
+
         File input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         byte[] imgBytes = readFile(input);
         BufferedImage img1 = Simapi.read(imgBytes);
@@ -347,7 +392,9 @@ public class TestSimapi extends VisualTestCase {
         img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
         img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
 
-        checkImage(new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn}, "Are the images sharp enough? (Left: Simapi / Right: Photoshop)");
+        checkImage(
+            new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn},
+            "Are the images sharp enough? (Left: Simapi / Right: Photoshop)");
 
         BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
 
@@ -466,8 +513,8 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage img1 = Simapi.read(getClass().getResource("screen1.png"));
         result = simapi.scale(img1, 0.75f);
         checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 75%?");
-        assertEquals(Math.round(img1.getWidth() * 0.75f), result.getWidth());
-        assertEquals(Math.round(img1.getHeight() * 0.75f), result.getHeight());
+        assertEquals((int)(img1.getWidth() * 0.75f), result.getWidth());
+        assertEquals((int)(img1.getHeight() * 0.75f), result.getHeight());
 
         BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
         result = simapi.resize(img2, 100, 50);
@@ -481,7 +528,7 @@ public class TestSimapi extends VisualTestCase {
 
         checkImage(new BufferedImage[] {img3, result}, "Has it been resized to 400x300 pixel with aspect intact?");
         assertEquals(400, result.getWidth());
-        assertEquals(255, result.getHeight()); // aspect ratio height is 255
+        assertEquals(254, result.getHeight()); // aspect ratio height is 255
     }
 
     /**
@@ -555,7 +602,7 @@ public class TestSimapi extends VisualTestCase {
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed center, down left, up right");
     }
-    
+
     /**
      * Tests resizing a transparent image.<p>
      * 
