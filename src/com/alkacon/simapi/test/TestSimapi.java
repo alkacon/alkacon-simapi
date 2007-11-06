@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2007/09/13 09:10:37 $
- * Version: $Revision: 1.10 $
+ * Date   : $Date: 2007/11/06 14:42:24 $
+ * Version: $Revision: 1.11 $
  *
  * This library is part of OpenCms -
  * the Open Source Content Mananagement System
@@ -69,23 +69,40 @@ public class TestSimapi extends VisualTestCase {
         super(params);
     }
 
-    //    /**
-    //     * Stops the test.<p>
-    //     * 
-    //     * Uncomment in case only a few selected tests should be performed.<p>
-    //     */
-    //    public void testStop() {
-    //
-    //        System.exit(0);
-    //    }
+    /**
+     * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testBlackImageIssue() throws Exception {
+
+        File input = new File(getClass().getResource("jugendliche.jpg").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:200,h:200,t:1");
+        byte[] scaled = scaler.scaleImage(imgBytes, "jugendliche.jpg");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
+    }
 
     /**
-     * Tests an issue with JDK 6 and GIF image processing.<p>
+     * Stops the test.<p>
      * 
-     * In a JDK 6 a GIF writer has been introduced. While this is 
-     * great in general, we already have our own implementation. Actually it appears that 
-     * the JDK default writer has an issue or at least behaves differently when scaling images 
-     * that contain transparent pixels.
+     * Uncomment in case only a few selected tests should be performed.<p>
+     */
+    public void testStop() {
+
+        System.exit(0);
+    }
+
+    /**
+     * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
+     * 
+     * Because of inconsistent use of rounding, some images did contain a black or "missing" line
+     * at the bottom when scaling to certain target sizes. 
      * 
      *  @throws Exception if the test fails
      */
