@@ -1,12 +1,9 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/GifAcmeEncoder.java,v $
- * Date   : $Date: 2005/11/15 14:04:02 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2007/11/20 15:59:13 $
+ * Version: $Revision: 1.2 $
  *
- * This library is part of OpenCms -
- * the Open Source Content Mananagement System
- *
- * Copyright (C) 2002 - 2005 Alkacon Software (http://www.alkacon.com)
+ * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software, please see the
+ * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- *
- * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
@@ -153,14 +147,14 @@ public class GifAcmeEncoder {
 
         width = img.getWidth(null);
         height = img.getHeight(null);
-        
-        if (! (img.getColorModel() instanceof IndexColorModel)) {
+
+        if (!(img.getColorModel() instanceof IndexColorModel)) {
             throw new IllegalArgumentException("GIF Encoder: Image must be 8-bit");
         }
-        
+
         pixels = img.getRaster().getPixels(0, 0, width, height, (int[])null);
         IndexColorModel icm = (IndexColorModel)img.getColorModel();
-        transparentPixel = icm.getTransparentPixel();        
+        transparentPixel = icm.getTransparentPixel();
         int mapSize = icm.getMapSize();
         r = new byte[mapSize];
         g = new byte[mapSize];
@@ -202,13 +196,15 @@ public class GifAcmeEncoder {
         // Figure out how many bits to use.
         int numColors = r.length;
         int BitsPerPixel;
-        if (numColors <= 2)
+        if (numColors <= 2) {
             BitsPerPixel = 1;
-        else if (numColors <= 4)
+        } else if (numColors <= 4) {
             BitsPerPixel = 2;
-        else if (numColors <= 16)
+        } else if (numColors <= 16) {
             BitsPerPixel = 4;
-        else BitsPerPixel = 8;
+        } else {
+            BitsPerPixel = 8;
+        }
 
         int ColorMapSize = 1 << BitsPerPixel;
         byte[] reds = new byte[ColorMapSize];
@@ -249,8 +245,9 @@ public class GifAcmeEncoder {
     private void char_out(byte c, DataOutput outs) throws IOException {
 
         accum[a_count++] = c;
-        if (a_count >= 254)
+        if (a_count >= 254) {
             flush_char(outs);
+        }
     }
 
     // table clear for block compress
@@ -266,8 +263,9 @@ public class GifAcmeEncoder {
     // reset code table
     private void cl_hash(int hxsize) {
 
-        for (int i = 0; i < hxsize; ++i)
+        for (int i = 0; i < hxsize; ++i) {
             htab[i] = -1;
+        }
     }
 
     private void compress(int init_bits, DataOutput outs) throws IOException {
@@ -297,8 +295,9 @@ public class GifAcmeEncoder {
         ent = GIFNextPixel();
 
         hshift = 0;
-        for (fcode = hsize; fcode < 65536; fcode *= 2)
+        for (fcode = hsize; fcode < 65536; fcode *= 2) {
             ++hshift;
+        }
         hshift = 8 - hshift; // set hash code range bound
 
         hsize_reg = hsize;
@@ -316,11 +315,13 @@ public class GifAcmeEncoder {
             } else if (htab[i] >= 0) // non-empty slot
             {
                 disp = hsize_reg - i; // secondary hash (after G. Knott)
-                if (i == 0)
+                if (i == 0) {
                     disp = 1;
+                }
                 do {
-                    if ((i -= disp) < 0)
+                    if ((i -= disp) < 0) {
                         i += hsize_reg;
+                    }
 
                     if (htab[i] == fcode) {
                         ent = codetab[i];
@@ -333,7 +334,9 @@ public class GifAcmeEncoder {
             if (free_ent < maxmaxcode) {
                 codetab[i] = free_ent++; // code -> hashtable
                 htab[i] = fcode;
-            } else cl_block(outs);
+            } else {
+                cl_block(outs);
+            }
         }
         // Put out the final code.
         output(ent, outs);
@@ -374,9 +377,11 @@ public class GifAcmeEncoder {
         LeftOfs = TopOfs = 0;
 
         // The initial code size
-        if (BitsPerPixel <= 1)
+        if (BitsPerPixel <= 1) {
             InitCodeSize = 2;
-        else InitCodeSize = BitsPerPixel;
+        } else {
+            InitCodeSize = BitsPerPixel;
+        }
 
         // Write the Magic header
         writeString(outs, "GIF89a");
@@ -436,9 +441,11 @@ public class GifAcmeEncoder {
         Putword(Height, outs);
 
         // Write out whether or not the image is interlaced
-        if (Interlace)
+        if (Interlace) {
             Putbyte((byte)0x40, outs);
-        else Putbyte((byte)0x00, outs);
+        } else {
+            Putbyte((byte)0x00, outs);
+        }
 
         // Write out the initial code size
         Putbyte((byte)InitCodeSize, outs);
@@ -458,9 +465,11 @@ public class GifAcmeEncoder {
     // Return the next pixel from the image
     private int GIFNextPixel() {
 
-        if (pixelIndex == numPixels)
+        if (pixelIndex == numPixels) {
             return EOF;
-        else return pixels[pixelIndex++];
+        } else {
+            return pixels[pixelIndex++];
+        }
     }
 
     private final int MAXCODE(int nx_bits) {
@@ -472,9 +481,11 @@ public class GifAcmeEncoder {
 
         cur_accum &= masks[cur_bits];
 
-        if (cur_bits > 0)
+        if (cur_bits > 0) {
             cur_accum |= (code << cur_bits);
-        else cur_accum = code;
+        } else {
+            cur_accum = code;
+        }
 
         cur_bits += n_bits;
 
@@ -486,15 +497,17 @@ public class GifAcmeEncoder {
 
         // If the next entry is going to be too big for the code size,
         // then increase it, if possible.
-        if (free_ent > maxcode || clear_flg) {
+        if ((free_ent > maxcode) || clear_flg) {
             if (clear_flg) {
                 maxcode = MAXCODE(n_bits = g_init_bits);
                 clear_flg = false;
             } else {
                 ++n_bits;
-                if (n_bits == maxbits)
+                if (n_bits == maxbits) {
                     maxcode = maxmaxcode;
-                else maxcode = MAXCODE(n_bits);
+                } else {
+                    maxcode = MAXCODE(n_bits);
+                }
             }
         }
 

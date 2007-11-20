@@ -45,7 +45,7 @@
  * Software Foundation, please see <http://www.apache.org/>.
  */
 
-package com.alkacon.simapi.test;
+package com.alkacon.simapi;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

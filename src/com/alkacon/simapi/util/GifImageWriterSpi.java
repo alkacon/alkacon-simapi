@@ -1,12 +1,9 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/GifImageWriterSpi.java,v $
- * Date   : $Date: 2005/10/17 07:35:30 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2007/11/20 15:59:13 $
+ * Version: $Revision: 1.2 $
  *
- * This library is part of OpenCms -
- * the Open Source Content Mananagement System
- *
- * Copyright (C) 2002 - 2005 Alkacon Software (http://www.alkacon.com)
+ * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software, please see the
+ * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- *
- * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software

@@ -1,12 +1,9 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/util/GifImageWriter.java,v $
- * Date   : $Date: 2005/11/15 14:04:02 $
- * Version: $Revision: 1.2 $
+ * Date   : $Date: 2007/11/20 15:59:13 $
+ * Version: $Revision: 1.3 $
  *
- * This library is part of OpenCms -
- * the Open Source Content Mananagement System
- *
- * Copyright (C) 2002 - 2005 Alkacon Software (http://www.alkacon.com)
+ * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software, please see the
+ * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- *
- * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
@@ -97,18 +91,22 @@ public class GifImageWriter extends ImageWriter {
      */
     public void write(IIOMetadata streamMetadata, IIOImage image, ImageWriteParam param) throws IOException {
 
-        if (image == null)
+        if (image == null) {
             throw new IllegalArgumentException("image == null");
+        }
 
-        if (image.hasRaster())
+        if (image.hasRaster()) {
             throw new UnsupportedOperationException("Cannot write rasters");
+        }
 
         output = getOutput();
-        if (output == null)
+        if (output == null) {
             throw new IllegalStateException("output was not set");
+        }
 
-        if (param == null)
+        if (param == null) {
             param = getDefaultWriteParam();
+        }
 
         ImageOutputStream ios = (ImageOutputStream)output;
         RenderedImage ri = image.getRenderedImage();

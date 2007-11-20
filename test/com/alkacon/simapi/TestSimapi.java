@@ -1,12 +1,9 @@
 /*
- * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/test/Attic/TestSimapi.java,v $
- * Date   : $Date: 2007/11/06 14:42:24 $
- * Version: $Revision: 1.11 $
+ * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
+ * Date   : $Date: 2007/11/20 15:59:10 $
+ * Version: $Revision: 1.1 $
  *
- * This library is part of OpenCms -
- * the Open Source Content Mananagement System
- *
- * Copyright (C) 2002 - 2005 Alkacon Software (http://www.alkacon.com)
+ * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,28 +15,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software, please see the
+ * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- *
- * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package com.alkacon.simapi.test;
+package com.alkacon.simapi;
 
-import com.alkacon.simapi.RenderSettings;
-import com.alkacon.simapi.Simapi;
 import com.alkacon.simapi.filter.ContrastFilter;
 import com.alkacon.simapi.filter.GrayscaleFilter;
 import com.alkacon.simapi.filter.LinearColormap;
 import com.alkacon.simapi.filter.LookupFilter;
 import com.alkacon.simapi.filter.ShadowFilter;
-
-import org.opencms.loader.CmsImageScaler;
 
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -48,11 +38,6 @@ import java.io.File;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
-
-//import com.drew.imaging.jpeg.JpegMetadataReader;
-//import com.drew.metadata.Directory;
-//import com.drew.metadata.Metadata;
-//import com.drew.metadata.Tag;
 
 /**
  * Test class for the imaging operations.<p>
@@ -70,56 +55,13 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
-     * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
-     * 
-     *  @throws Exception if the test fails
-     */
-    public void testBlackImageIssue() throws Exception {
-
-        File input = new File(getClass().getResource("jugendliche.jpg").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-
-        CmsImageScaler scaler = new CmsImageScaler();
-        scaler.parseParameters("w:200,h:200,t:1");
-        byte[] scaled = scaler.scaleImage(imgBytes, "jugendliche.jpg");
-        BufferedImage img2 = Simapi.read(scaled);
-
-        checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
-    }
-
-    /**
      * Stops the test.<p>
      * 
      * Uncomment in case only a few selected tests should be performed.<p>
      */
     public void testStop() {
 
-        System.exit(0);
-    }
-
-    /**
-     * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
-     * 
-     * Because of inconsistent use of rounding, some images did contain a black or "missing" line
-     * at the bottom when scaling to certain target sizes. 
-     * 
-     *  @throws Exception if the test fails
-     */
-    public void testMissingLineIssue() throws Exception {
-
-        File input = new File(getClass().getResource("verm.gif").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-
-        CmsImageScaler scaler = new CmsImageScaler();
-        scaler.parseParameters("w:100,h:100,t:3");
-        byte[] scaled = scaler.scaleImage(imgBytes, "verm.gif");
-        BufferedImage img2 = Simapi.read(scaled);
-
-        checkImage(new BufferedImage[] {img1, img2}, "Is the 'missing line' issue solved?");
-        assertEquals(100, img2.getWidth());
-        assertEquals(98, img2.getHeight()); // aspect ratio kept intact
+        //        System.exit(0);
     }
 
     /**
@@ -143,27 +85,6 @@ public class TestSimapi extends VisualTestCase {
         img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
-    }
-
-    /**
-     * Tests resizing a transparent image.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testScaleTransparentIssue() throws Exception {
-
-        File input = new File(getClass().getResource("logo_alkacon_160_t.png").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-
-        CmsImageScaler scaler = new CmsImageScaler();
-        scaler.parseParameters("w:160,h:90,t:4,q:85");
-        byte[] scaled = scaler.scaleImage(imgBytes, "logo_alkacon_160_t.png");
-        BufferedImage img2 = Simapi.read(scaled);
-
-        checkImage(
-            new BufferedImage[] {img1, img2},
-            "Has it been scaled to 160x52 pixel and saved as PNG with transparent background ok?");
     }
 
     /**
@@ -432,8 +353,8 @@ public class TestSimapi extends VisualTestCase {
     public void testRead() throws Exception {
 
         BufferedImage img1 = Simapi.read(getClass().getResource("alkacon.png"));
-        BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
-        BufferedImage img3 = Simapi.read(getClass().getResource("opencms.gif"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("alkacon_text.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("logo_alkacon_150_t.gif"));
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Do you see 3 images?");
     }
@@ -447,7 +368,7 @@ public class TestSimapi extends VisualTestCase {
 
         Simapi simapi = new Simapi();
 
-        File input = new File(getClass().getResource("opencms.gif").getPath());
+        File input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         BufferedImage img1 = Simapi.read(input);
         BufferedImage result1 = simapi.resize(img1, 200, 100, Simapi.POS_CENTER);
         BufferedImage result2 = simapi.resize(img1, 200, 100, Simapi.POS_STRAIGHT_LEFT);
@@ -533,7 +454,7 @@ public class TestSimapi extends VisualTestCase {
         assertEquals((int)(img1.getWidth() * 0.75f), result.getWidth());
         assertEquals((int)(img1.getHeight() * 0.75f), result.getHeight());
 
-        BufferedImage img2 = Simapi.read(getClass().getResource("opencms_text.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("alkacon_text.jpg"));
         result = simapi.resize(img2, 100, 50);
 
         checkImage(new BufferedImage[] {img2, result}, "Has it been resized to 100x50 pixel?");
@@ -573,7 +494,7 @@ public class TestSimapi extends VisualTestCase {
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed down, right, up");
 
-        input = new File(getClass().getResource("opencms.gif").getPath());
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         img1 = Simapi.read(input);
 
         result1 = simapi.resize(img1, 150, 150, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
@@ -599,7 +520,7 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage result2;
         BufferedImage result3;
 
-        input = new File(getClass().getResource("opencms.gif").getPath());
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         img1 = Simapi.read(input);
 
         result1 = simapi.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_STRAIGHT_DOWN);
@@ -609,7 +530,7 @@ public class TestSimapi extends VisualTestCase {
             new BufferedImage[] {result1, result2, result3},
             "Images should be scaled and placed down, right, up");
 
-        input = new File(getClass().getResource("opencms.gif").getPath());
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         img1 = Simapi.read(input);
 
         result1 = simapi.resize(img1, 300, 300, Color.MAGENTA, Simapi.POS_CENTER);
@@ -782,7 +703,7 @@ public class TestSimapi extends VisualTestCase {
         File input;
         File destination;
 
-        input = new File(getClass().getResource("opencms.gif").getPath());
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         BufferedImage img1 = Simapi.read(input);
         result = simapi.resize(img1, 300, 150, true, true);
 
@@ -807,7 +728,7 @@ public class TestSimapi extends VisualTestCase {
         File input;
         File destination;
 
-        input = new File(getClass().getResource("opencms.gif").getPath());
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
         BufferedImage img1 = Simapi.read(input);
         result = simapi.resize(img1, 300, 150, true, true);
         destination = new File(input.getParentFile(), "saved1.jpg");

@@ -1,12 +1,9 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2007/09/13 09:10:37 $
- * Version: $Revision: 1.12 $
+ * Date   : $Date: 2007/11/20 15:59:13 $
+ * Version: $Revision: 1.13 $
  *
- * This library is part of OpenCms -
- * the Open Source Content Mananagement System
- *
- * Copyright (C) 2002 - 2005 Alkacon Software (http://www.alkacon.com)
+ * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,11 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
- * For further information about Alkacon Software, please see the
+ * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- *
- * For further information about OpenCms, please see the
- * project website: http://www.opencms.org
  * 
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
@@ -189,7 +183,7 @@ public class Simapi {
      * Returns the image type from the given file name based on the file suffix (extension)
      * and the available image writers.<p>
      * 
-     * For example, for the file name "opencms.gif" the type is GIF, for 
+     * For example, for the file name "alkacon.gif" the type is GIF, for 
      * "alkacon.jpeg" is is "JPEG" etc.<p> 
      * 
      * In case the input filename has no suffix, or there is no known image writer for the format defined
