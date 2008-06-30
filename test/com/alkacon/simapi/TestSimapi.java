@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
- * Date   : $Date: 2008/06/30 13:42:13 $
- * Version: $Revision: 1.2 $
+ * Date   : $Date: 2008/06/30 15:04:29 $
+ * Version: $Revision: 1.3 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -65,6 +65,38 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests an issue with certain scale sizes not working.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testSpecialScaleSize() throws Exception {
+
+        File input = new File(getClass().getResource("meerbild.jpg").getPath());
+        RenderSettings rs = new RenderSettings(Simapi.RENDER_QUALITY);
+        // need to reduce default max blur size, otherwise test won't run in eclipse
+        rs.setMaximumBlurSize(2200 * 1700);
+        Simapi simapi = new Simapi(rs);
+
+        BufferedImage img1 = Simapi.read(input);
+        assertEquals(2272, img1.getWidth());
+        assertEquals(1704, img1.getHeight()); // must have this exact size to reproduce bug
+        img1 = simapi.resize(img1, 690, 219, Simapi.POS_UP_LEFT);
+        assertEquals(690, img1.getWidth());
+        assertEquals(219, img1.getHeight());
+        checkImage(new BufferedImage[] {img1}, "Is the 'special scale size' issue solved?");
+    }
+
+    //    /**
+    //     * Stops the test.<p>
+    //     * 
+    //     * Uncomment in case only a few selected tests should be performed.<p>
+    //     */
+    //    public void testStop() {
+    //
+    //        System.exit(0);
+    //    }
+
+    /**
      * Tests an issue the setup wizard would not show image processing capabilities.<p>
      * 
      *  @throws Exception if the test fails
@@ -97,16 +129,6 @@ public class TestSimapi extends VisualTestCase {
 
         Arrays.equals(simapi.getBytes(img2, Simapi.TYPE_PNG), simapi.getBytes(img3, Simapi.TYPE_PNG));
     }
-
-    //    /**
-    //     * Stops the test.<p>
-    //     * 
-    //     * Uncomment in case only a few selected tests should be performed.<p>
-    //     */
-    //    public void testStop() {
-    //
-    //        System.exit(0);
-    //    }
 
     /**
      * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
@@ -559,8 +581,8 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage img1 = Simapi.read(getClass().getResource("screen1.png"));
         result = simapi.scale(img1, 0.75f);
         checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 75%?");
-        assertEquals((int)(img1.getWidth() * 0.75f), result.getWidth());
-        assertEquals((int)(img1.getHeight() * 0.75f), result.getHeight());
+        assertEquals(Math.round(img1.getWidth() * 0.75f), result.getWidth());
+        assertEquals(Math.round(img1.getHeight() * 0.75f), result.getHeight());
 
         BufferedImage img2 = Simapi.read(getClass().getResource("alkacon_text.jpg"));
         result = simapi.resize(img2, 100, 50);

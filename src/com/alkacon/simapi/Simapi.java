@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2007/11/20 15:59:13 $
- * Version: $Revision: 1.13 $
+ * Date   : $Date: 2008/06/30 15:04:29 $
+ * Version: $Revision: 1.14 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -814,8 +814,8 @@ public class Simapi {
      */
     public BufferedImage scale(BufferedImage image, float widthScale, float heightScale) {
 
-        int targetWidth = (int)(image.getWidth() * widthScale);
-        int targetHeight = (int)(image.getHeight() * heightScale);
+        int targetWidth = Math.round(image.getWidth() * widthScale);
+        int targetHeight = Math.round(image.getHeight() * heightScale);
 
         return scale(image, widthScale, heightScale, targetWidth, targetHeight);
     }
