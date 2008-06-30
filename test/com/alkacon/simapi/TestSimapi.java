@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
- * Date   : $Date: 2007/11/20 15:59:10 $
- * Version: $Revision: 1.1 $
+ * Date   : $Date: 2008/06/30 13:42:13 $
+ * Version: $Revision: 1.2 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -27,17 +27,27 @@ package com.alkacon.simapi;
 
 import com.alkacon.simapi.filter.ContrastFilter;
 import com.alkacon.simapi.filter.GrayscaleFilter;
+import com.alkacon.simapi.filter.ImageMath;
 import com.alkacon.simapi.filter.LinearColormap;
 import com.alkacon.simapi.filter.LookupFilter;
+import com.alkacon.simapi.filter.RotateFilter;
 import com.alkacon.simapi.filter.ShadowFilter;
+
+import org.opencms.loader.CmsImageScaler;
 
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.imageio.ImageIO;
+
+//import com.drew.imaging.jpeg.JpegMetadataReader;
+//import com.drew.metadata.Directory;
+//import com.drew.metadata.Metadata;
+//import com.drew.metadata.Tag;
 
 /**
  * Test class for the imaging operations.<p>
@@ -55,13 +65,90 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
-     * Stops the test.<p>
+     * Tests an issue the setup wizard would not show image processing capabilities.<p>
      * 
-     * Uncomment in case only a few selected tests should be performed.<p>
+     *  @throws Exception if the test fails
      */
-    public void testStop() {
+    public void testSetupWizardIssue() throws Exception {
 
-        //        System.exit(0);
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
+        settings.setCompressionQuality(0.85f);
+        Simapi simapi = new Simapi(settings);
+
+        ImageIO.scanForPlugins();
+        Iterator pngReaders = ImageIO.getImageReadersByFormatName(Simapi.TYPE_PNG);
+        if (!pngReaders.hasNext()) {
+            throw (new Exception("No Java ImageIO readers for the PNG format are available."));
+        }
+        Iterator pngWriters = ImageIO.getImageWritersByFormatName(Simapi.TYPE_PNG);
+        if (!pngWriters.hasNext()) {
+            throw (new Exception("No Java ImageIO writers for the PNG format are available."));
+        }
+
+        File input1 = new File(getClass().getResource("screen_1024.png").getPath());
+        BufferedImage img1 = Simapi.read(input1);
+        BufferedImage img3 = simapi.applyFilter(img1, new RotateFilter(ImageMath.PI));
+
+        File destination = new File(input1.getParentFile(), "test_setup.png");
+        simapi.write(img3, destination, Simapi.TYPE_PNG);
+
+        File input2 = new File(getClass().getResource("screen_1024.png").getPath());
+        BufferedImage img2 = Simapi.read(input2);
+
+        Arrays.equals(simapi.getBytes(img2, Simapi.TYPE_PNG), simapi.getBytes(img3, Simapi.TYPE_PNG));
+    }
+
+    //    /**
+    //     * Stops the test.<p>
+    //     * 
+    //     * Uncomment in case only a few selected tests should be performed.<p>
+    //     */
+    //    public void testStop() {
+    //
+    //        System.exit(0);
+    //    }
+
+    /**
+     * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testBlackImageIssue() throws Exception {
+
+        File input = new File(getClass().getResource("jugendliche.jpg").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:200,h:200,t:1");
+        byte[] scaled = scaler.scaleImage(imgBytes, "jugendliche.jpg");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
+    }
+
+    /**
+     * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
+     * 
+     * Because of inconsistent use of rounding, some images did contain a black or "missing" line
+     * at the bottom when scaling to certain target sizes. 
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testMissingLineIssue() throws Exception {
+
+        File input = new File(getClass().getResource("verm.gif").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:100,h:100,t:3");
+        byte[] scaled = scaler.scaleImage(imgBytes, "verm.gif");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'missing line' issue solved?");
+        assertEquals(100, img2.getWidth());
+        assertEquals(98, img2.getHeight()); // aspect ratio kept intact
     }
 
     /**
@@ -85,6 +172,27 @@ public class TestSimapi extends VisualTestCase {
         img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
+    }
+
+    /**
+     * Tests resizing a transparent image.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testScaleTransparentIssue() throws Exception {
+
+        File input = new File(getClass().getResource("logo_alkacon_160_t.png").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:160,h:90,t:4,q:85");
+        byte[] scaled = scaler.scaleImage(imgBytes, "logo_alkacon_160_t.png");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(
+            new BufferedImage[] {img1, img2},
+            "Has it been scaled to 160x52 pixel and saved as PNG with transparent background ok?");
     }
 
     /**
