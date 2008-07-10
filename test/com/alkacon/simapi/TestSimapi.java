@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
- * Date   : $Date: 2008/07/10 11:29:05 $
- * Version: $Revision: 1.4 $
+ * Date   : $Date: 2008/07/10 14:54:22 $
+ * Version: $Revision: 1.5 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -65,6 +65,62 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests image cropping using an OpenCms image scaler instance.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testImageCroppingFromScaler() throws Exception {
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        byte[] imgBytes = readFile(input);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+
+        scaler.parseParameters("cx:10,cy:10,cw:400,ch:400");
+        byte[] scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        BufferedImage result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:-100,cw:1250,ch:400");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized) using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:0,cw:160,ch:120,w:800,h:600");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged) using the scaler?");
+
+        scaler.parseParameters("cx:-50,cy:-50,cw:400,ch:300,w:160,h:120");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced) using the scaler?");
+
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        imgBytes = readFile(input);
+
+        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:transparent");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:#ff0000");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
+    }
+
+    /**
+     * Stops the test.<p>
+     * 
+     * Uncomment in case only a few selected tests should be performed.<p>
+     */
+    public void testStop() {
+
+        System.exit(0);
+    }
+
+    /**
      * Tests image cropping.<p>
      * 
      *  @throws Exception if the test fails
@@ -96,16 +152,6 @@ public class TestSimapi extends VisualTestCase {
 
         result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200, Color.RED);
         checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color?");
-    }
-
-    /**
-     * Stops the test.<p>
-     * 
-     * Uncomment in case only a few selected tests should be performed.<p>
-     */
-    public void testStop() {
-
-        System.exit(0);
     }
 
     /**
