@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
- * Date   : $Date: 2008/06/30 15:04:29 $
- * Version: $Revision: 1.3 $
+ * Date   : $Date: 2008/07/10 11:29:05 $
+ * Version: $Revision: 1.4 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -65,6 +65,50 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests image cropping.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testImageCropping() throws Exception {
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        Simapi simapi = new Simapi();
+        BufferedImage img1 = Simapi.read(input);
+
+        BufferedImage result = simapi.crop(img1, 10, 10, 400, 400);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped?");
+
+        result = simapi.crop(img1, 0, -100, 1250, 400);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized)?");
+
+        result = simapi.cropToSize(img1, 0, 0, 160, 120, 800, 600);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged)?");
+
+        result = simapi.cropToSize(img1, -50, -50, 400, 300, 160, 120);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced)?");
+
+        // another test with an image that support transparent colors
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        img1 = Simapi.read(input);
+
+        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact?");
+
+        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200, Color.RED);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color?");
+    }
+
+    /**
+     * Stops the test.<p>
+     * 
+     * Uncomment in case only a few selected tests should be performed.<p>
+     */
+    public void testStop() {
+
+        System.exit(0);
+    }
+
+    /**
      * Tests an issue with certain scale sizes not working.<p>
      * 
      *  @throws Exception if the test fails
@@ -85,16 +129,6 @@ public class TestSimapi extends VisualTestCase {
         assertEquals(219, img1.getHeight());
         checkImage(new BufferedImage[] {img1}, "Is the 'special scale size' issue solved?");
     }
-
-    //    /**
-    //     * Stops the test.<p>
-    //     * 
-    //     * Uncomment in case only a few selected tests should be performed.<p>
-    //     */
-    //    public void testStop() {
-    //
-    //        System.exit(0);
-    //    }
 
     /**
      * Tests an issue the setup wizard would not show image processing capabilities.<p>

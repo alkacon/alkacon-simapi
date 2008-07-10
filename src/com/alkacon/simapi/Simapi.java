@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2008/06/30 15:04:29 $
- * Version: $Revision: 1.14 $
+ * Date   : $Date: 2008/07/10 11:29:05 $
+ * Version: $Revision: 1.15 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -100,13 +100,13 @@ public class Simapi {
     /** Position indicator: Up right. */
     public static final int POS_UP_RIGHT = 8;
 
-    /** Indicates to use the <code>MEDIUM</code> render settigns. */
+    /** Indicates to use the <code>MEDIUM</code> render settings. */
     public static final int RENDER_MEDIUM = 1;
 
-    /** Indicates to use the <code>QUALITY</code> render settigns (default). */
+    /** Indicates to use the <code>QUALITY</code> render settings (default). */
     public static final int RENDER_QUALITY = 0;
 
-    /** Indicates to use the <code>SPEED</code> render settigns. */
+    /** Indicates to use the <code>SPEED</code> render settings. */
     public static final int RENDER_SPEED = 2;
 
     /** Constant to identify the <code>BMP</code> image type. */
@@ -139,7 +139,7 @@ public class Simapi {
     }
 
     /**
-     * Creates a new simapi instance with the sepcified render settings.<p>
+     * Creates a new simapi instance with the specified render settings.<p>
      * 
      * @param renderSettings the render settings to use
      */
@@ -500,6 +500,172 @@ public class Simapi {
 
         // return the result
         return image.getSubimage(x, y, width, height);
+    }
+
+    /**
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>. 
+     * 
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
+     * the transparent color is used for the additional background pixels.
+     * If the image does not support transparent pixels, the transparent replacement color (whit by default)
+     * will be used.<p> 
+     * 
+     * @param image the image to crop
+     * @param x the x position where the crop starts
+     * @param y the y position where the crop starts
+     * @param width the width of the cropped target image 
+     * @param height the height of the cropped target image 
+     * 
+     * @return a cropped part of the given image from the specified 
+     *      <code>x,y</code> point to the given <code>width,height</code>
+     *      
+     * @see #crop(BufferedImage, int, int, int, int, Color)
+     */
+    public BufferedImage crop(BufferedImage image, int x, int y, int width, int height) {
+
+        return crop(image, x, y, width, height, COLOR_TRANSPARENT);
+    }
+
+    /**
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>. 
+     * 
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
+     * the given background replace color is used for the additional pixels.<p> 
+     * 
+     * @param image the image to crop
+     * @param x the x position where the crop starts
+     * @param y the y position where the crop starts
+     * @param width the width of the cropped target image 
+     * @param height the height of the cropped target image
+     * @param backgroundColor the color to use if the background must be enlarged 
+     * 
+     * @return a cropped part of the given image from the specified 
+     *      <code>x,y</code> point to the given <code>width,height</code>
+     *      
+     * @see #crop(BufferedImage, int, int, int, int)
+     */
+    public BufferedImage crop(BufferedImage image, int x, int y, int width, int height, Color backgroundColor) {
+
+        if ((x < 0) || (y < 0) || (x + width >= image.getWidth()) || (y + height >= image.getHeight())) {
+            // crop area lies partly outside of image - blow up result image to fit
+            int xpos = x;
+            int ypos = y;
+            int imageWidth = image.getWidth();
+            int imageHeight = image.getHeight();
+            if (x < 0) {
+                xpos = Math.abs(x);
+                x = 0;
+                imageWidth += xpos;
+            }
+            if (y < 0) {
+                ypos = Math.abs(y);
+                y = 0;
+                imageHeight += ypos;
+            }
+            if (imageWidth < width) {
+                imageWidth += width;
+            }
+            if (imageHeight < height) {
+                imageHeight += height;
+            }
+            // draw input image to enlarged canvas
+            BufferedImage result = createImage(image.getColorModel(), imageWidth, imageHeight);
+            Graphics2D g = result.createGraphics();
+            // check the background color
+            ColorModel cm = result.getColorModel();
+            if (!cm.hasAlpha() && (backgroundColor == COLOR_TRANSPARENT)) {
+                // alpha not supported by target color model
+                backgroundColor = m_renderSettings.getTransparentReplaceColor();
+            }
+            if (backgroundColor != COLOR_TRANSPARENT) {
+                // don't fill if background is transparent
+                g.setPaintMode();
+                g.setColor(backgroundColor);
+                g.fillRect(0, 0, result.getWidth(), result.getHeight());
+            }
+            g.drawImage(image, xpos, ypos, null);
+            g.dispose();
+            // exchange image with result
+            image = result;
+        }
+
+        // return the result image
+        return image.getSubimage(x, y, width, height);
+    }
+
+    /**
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>,
+     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>. 
+     * 
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
+     * the transparent color is used for the additional background pixels.
+     * If the image does not support transparent pixels, the transparent replacement color (whit by default)
+     * will be used.<p> 
+     * 
+     * The aspect ratio of the target image is not kept.<p>
+     * 
+     * @param image the image to crop
+     * @param x the x position where the crop starts
+     * @param y the y position where the crop starts
+     * @param width the width of the cropped area from the source image
+     * @param height the height of the cropped area from the source image
+     * @param targetWidth the width of the target image  
+     * @param targetHeight the width of the target image 
+     * 
+     * @return a cropped part of the given image from the specified <code>x,y</code> point 
+     *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code>
+     *      
+     * @see #cropToSize(BufferedImage, int, int, int, int, int, int, Color)
+     */
+    public BufferedImage cropToSize(
+        BufferedImage image,
+        int x,
+        int y,
+        int width,
+        int height,
+        int targetWidth,
+        int targetHeight) {
+
+        return cropToSize(image, x, y, width, height, targetWidth, targetHeight, COLOR_TRANSPARENT);
+    }
+
+    /**
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>,
+     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>. 
+     * 
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
+     * the given background replace color is used for the additional pixels.<p> 
+     * 
+     * The aspect ratio of the target image is not kept.<p>
+     * 
+     * @param image the image to crop
+     * @param x the x position where the crop starts
+     * @param y the y position where the crop starts
+     * @param width the width of the cropped area from the source image
+     * @param height the height of the cropped area from the source image
+     * @param targetWidth the width of the target image  
+     * @param targetHeight the width of the target image 
+     * @param backgroundColor the color to use if the background must be enlarged 
+     * 
+     * @return a cropped part of the given image from the specified <code>x,y</code> point 
+     *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code> 
+     *      
+     * @see #cropToSize(BufferedImage, int, int, int, int, int, int)
+     */
+    public BufferedImage cropToSize(
+        BufferedImage image,
+        int x,
+        int y,
+        int width,
+        int height,
+        int targetWidth,
+        int targetHeight,
+        Color backgroundColor) {
+
+        image = crop(image, x, y, width, height, backgroundColor);
+        image = resize(image, targetWidth, targetHeight);
+
+        return image;
     }
 
     /**
