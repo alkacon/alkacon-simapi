@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2008/07/10 11:29:05 $
- * Version: $Revision: 1.15 $
+ * Date   : $Date: 2008/07/15 12:34:37 $
+ * Version: $Revision: 1.16 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -556,11 +556,15 @@ public class Simapi {
                 xpos = Math.abs(x);
                 x = 0;
                 imageWidth += xpos;
+            } else {
+                xpos = 0;
             }
             if (y < 0) {
                 ypos = Math.abs(y);
                 y = 0;
                 imageHeight += ypos;
+            } else {
+                ypos = 0;
             }
             if (imageWidth < width) {
                 imageWidth += width;

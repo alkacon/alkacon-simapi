@@ -1,7 +1,7 @@
 /*
  * File   : $Source: /alkacon/cvs/AlkaconSimapi/test/com/alkacon/simapi/TestSimapi.java,v $
- * Date   : $Date: 2008/07/10 14:54:22 $
- * Version: $Revision: 1.5 $
+ * Date   : $Date: 2008/07/15 12:34:37 $
+ * Version: $Revision: 1.6 $
  *
  * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
  *
@@ -75,23 +75,26 @@ public class TestSimapi extends VisualTestCase {
         byte[] imgBytes = readFile(input);
 
         CmsImageScaler scaler = new CmsImageScaler();
+        byte[] scaled;
+        BufferedImage result;
 
         scaler.parseParameters("cx:10,cy:10,cw:400,ch:400");
-        byte[] scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        BufferedImage result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped using the scaler?");
-
-        scaler.parseParameters("cx:0,cy:-100,cw:1250,ch:400");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized) using the scaler?");
+        checkImage(new BufferedImage[] {result}, "Has it been cropped using the scaler?");
+
+        // this use case is not supported since the scaler does not work with negative x,y positions
+        //        scaler.parseParameters("cx:0,cy:-100,cw:1250,ch:400");
+        //        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        //        result = Simapi.read(scaled);
+        //        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized) using the scaler?");
 
         scaler.parseParameters("cx:0,cy:0,cw:160,ch:120,w:800,h:600");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged) using the scaler?");
 
-        scaler.parseParameters("cx:-50,cy:-50,cw:400,ch:300,w:160,h:120");
+        scaler.parseParameters("cx:0,cy:0,cw:400,ch:300,w:160,h:120");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced) using the scaler?");
@@ -108,16 +111,11 @@ public class TestSimapi extends VisualTestCase {
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
-    }
 
-    /**
-     * Stops the test.<p>
-     * 
-     * Uncomment in case only a few selected tests should be performed.<p>
-     */
-    public void testStop() {
-
-        System.exit(0);
+        scaler.parseParameters("h:500,w:1000,cx:21,cy:15,ch:23,cw:1050,c:#00ff00");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
     }
 
     /**
@@ -129,9 +127,11 @@ public class TestSimapi extends VisualTestCase {
 
         File input = new File(getClass().getResource("screen_1024.png").getPath());
         Simapi simapi = new Simapi();
-        BufferedImage img1 = Simapi.read(input);
+        BufferedImage result, img1;
 
-        BufferedImage result = simapi.crop(img1, 10, 10, 400, 400);
+        img1 = Simapi.read(input);
+
+        result = simapi.crop(img1, 10, 10, 400, 400);
         checkImage(new BufferedImage[] {result}, "Has it been cropped?");
 
         result = simapi.crop(img1, 0, -100, 1250, 400);
@@ -152,6 +152,19 @@ public class TestSimapi extends VisualTestCase {
 
         result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200, Color.RED);
         checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color?");
+
+        result = simapi.cropToSize(img1, 21, 15, 1050, 23, 1000, 500, Color.GREEN);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with green bg color and transformed?");
+    }
+
+    /**
+     * Stops the test.<p>
+     * 
+     * Uncomment in case only a few selected tests should be performed.<p>
+     */
+    public void testStop() {
+
+        System.exit(0);
     }
 
     /**
