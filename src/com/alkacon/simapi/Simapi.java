@@ -1203,7 +1203,7 @@ public class Simapi {
 
         // obtain the writer for the image
         // this must work since it is already done in the #getImageType(String) call above
-        ImageWriter writer = ImageIO.getImageWritersByFormatName(formatName).next();
+        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByFormatName(formatName).next();
 
         // get default image writer parameter
         ImageWriteParam param = writer.getDefaultWriteParam();

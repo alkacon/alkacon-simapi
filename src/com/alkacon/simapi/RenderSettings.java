@@ -189,9 +189,9 @@ public class RenderSettings {
     }
 
     /**
-     * Returns a copy of the list of image filters that should be applied to the ürocessed image.<p>
+     * Returns a copy of the list of image filters that should be applied to the processed image.<p>
      * 
-     * @return a copy of the list of image filters that should be applied to the ürocessed image
+     * @return a copy of the list of image filters that should be applied to the processed image
      */
     public List getImageFilters() {
 
