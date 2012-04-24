@@ -65,96 +65,89 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
-     * Tests image cropping using an OpenCms image scaler instance.<p>
+     * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
      * 
-     *  @throws Exception if the test fails
+     * @throws Exception if the test fails
      */
-    public void testImageCroppingFromScaler() throws Exception {
+    public void testBadScaleQualityIssue() throws Exception {
 
-        File input = new File(getClass().getResource("screen_1024.png").getPath());
-        byte[] imgBytes = readFile(input);
+        Simapi simapi = new Simapi();
 
-        CmsImageScaler scaler = new CmsImageScaler();
-        byte[] scaled;
-        BufferedImage result;
+        BufferedImage img1 = Simapi.read(getClass().getResource("112_org.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("113_org.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("114_org.jpg"));
 
-        scaler.parseParameters("cx:10,cy:10,cw:400,ch:400");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped using the scaler?");
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
+        settings.setCompressionQuality(0.85f);
 
-        // this use case is not supported since the scaler does not work with negative x,y positions
-        //        scaler.parseParameters("cx:0,cy:-100,cw:1250,ch:400");
-        //        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        //        result = Simapi.read(scaled);
-        //        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized) using the scaler?");
+        img1 = simapi.resize(img1, 150, 113, Color.RED, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 150, 113, Color.RED, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
-        scaler.parseParameters("cx:0,cy:0,cw:160,ch:120,w:800,h:600");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged) using the scaler?");
-
-        scaler.parseParameters("cx:0,cy:0,cw:400,ch:300,w:160,h:120");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced) using the scaler?");
-
-        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
-        imgBytes = readFile(input);
-
-        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:transparent");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact using the scaler?");
-
-        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:#ff0000");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
-
-        scaler.parseParameters("h:500,w:1000,cx:21,cy:15,ch:23,cw:1050,c:#00ff00");
-        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
-        result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
+        checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
     }
 
     /**
-     * Tests image cropping.<p>
+     * Tests "bad quality" issue encountered when scaling VERY large images to a small size.<p>
      * 
-     *  @throws Exception if the test fails
+     * @throws Exception if the test fails
      */
-    public void testImageCropping() throws Exception {
+    public void testBadScaleQualityIssue2() throws Exception {
 
-        File input = new File(getClass().getResource("screen_1024.png").getPath());
         Simapi simapi = new Simapi();
-        BufferedImage result, img1;
 
-        img1 = Simapi.read(input);
+        BufferedImage img1 = Simapi.read(getClass().getResource("Messdiener.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("Messdiener_sml.jpg"));
 
-        result = simapi.crop(img1, 10, 10, 400, 400);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped?");
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
+        settings.setCompressionQuality(0.85f);
 
-        result = simapi.crop(img1, 0, -100, 1250, 400);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized)?");
+        img1 = simapi.resize(img1, 800, 533, Color.RED, Simapi.POS_CENTER);
 
-        result = simapi.cropToSize(img1, 0, 0, 160, 120, 800, 600);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged)?");
+        checkImage(new BufferedImage[] {img1, img2}, "Is the quality ok? [Left: Simapi / Right: Prescaled]");
+    }
 
-        result = simapi.cropToSize(img1, -50, -50, 400, 300, 160, 120);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced)?");
+    /**
+     * Tests "slow scaling" issue encountered with some JPEG's.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testSlowScalingIssue() throws Exception {
 
-        // another test with an image that support transparent colors
-        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
-        img1 = Simapi.read(input);
+        Simapi simapi = new Simapi();
 
-        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact?");
+        long startTime = System.currentTimeMillis();
 
-        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200, Color.RED);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color?");
+        BufferedImage img1 = Simapi.read(getClass().getResource("slow_scale01.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("slow_scale02.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("slow_scale03.jpg"));
 
-        result = simapi.cropToSize(img1, 21, 15, 1050, 23, 1000, 500, Color.GREEN);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with green bg color and transformed?");
+        long loadTime = System.currentTimeMillis() - startTime;
+        startTime = System.currentTimeMillis();
+
+        img1 = simapi.resize(img1, 100, 100, Color.RED, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 100, 100, Color.RED, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 100, 100, Color.RED, Simapi.POS_CENTER);
+
+        long scaleTime = System.currentTimeMillis() - startTime;
+
+        checkImage(new BufferedImage[] {img1, img2, img3}, "Load time (msec): "
+            + loadTime
+            + " / Scale time (msec): "
+            + scaleTime
+            + ". Is this ok?");
+
+        File baseDir = new File(getClass().getResource("slow_scale01.jpg").getPath()).getParentFile();
+
+        simapi.write(img1, new File(baseDir, "w_slow_scale01.jpg"), Simapi.TYPE_JPEG);
+        simapi.write(img2, new File(baseDir, "w_slow_scale02.jpg"), Simapi.TYPE_JPEG);
+        simapi.write(img3, new File(baseDir, "w_slow_scale03.jpg"), Simapi.TYPE_JPEG);
+
+        img1 = Simapi.read(getClass().getResource("w_slow_scale01.jpg"));
+        img2 = Simapi.read(getClass().getResource("w_slow_scale02.jpg"));
+        img3 = Simapi.read(getClass().getResource("w_slow_scale03.jpg"));
+
+        checkImage(new BufferedImage[] {img1, img2, img3}, "Is default low quality OK for thumbnails?");
     }
 
     /**
@@ -165,6 +158,143 @@ public class TestSimapi extends VisualTestCase {
     public void testStop() {
 
         System.exit(0);
+    }
+
+    /**
+     * Tests "not sharp enough" issue encountered when scaling large images to a very small size.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testNotSharpEnoughIssue() throws Exception {
+
+        Simapi simapi = new Simapi();
+
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
+        settings.setCompressionQuality(0.85f);
+
+        BufferedImage img1 = Simapi.read(getClass().getResource("_1_or.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("_2_or.jpg"));
+        BufferedImage img3 = Simapi.read(getClass().getResource("_3_or.jpg"));
+
+        BufferedImage img1Tn = Simapi.read(getClass().getResource("_1_tn.jpg"));
+        BufferedImage img2Tn = Simapi.read(getClass().getResource("_2_tn.jpg"));
+        BufferedImage img3Tn = Simapi.read(getClass().getResource("_3_tn.jpg"));
+
+        img1 = simapi.resize(img1, 75, 113, Color.RED, Simapi.POS_CENTER);
+        img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
+        img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
+
+        checkImage(
+            new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn},
+            "Are the images sharp enough? (Left: Simapi / Right: Photoshop)");
+
+        BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
+
+        BufferedImage imgA = simapi.resize(imgOri, 600, 450, Color.RED, Simapi.POS_CENTER);
+        BufferedImage imgB = simapi.resize(imgOri, 400, 300, Color.RED, Simapi.POS_CENTER);
+        BufferedImage imgC = simapi.resize(imgOri, 300, 225, Color.RED, Simapi.POS_CENTER);
+        BufferedImage imgD = simapi.resize(imgOri, 200, 150, Color.RED, Simapi.POS_CENTER);
+        BufferedImage imgE = simapi.resize(imgOri, 150, 113, Color.RED, Simapi.POS_CENTER);
+
+        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");
+    }
+
+    /**
+     * Tests the speed of the scaling.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testScalingSpeed() throws Exception {
+
+        Simapi simapi = new Simapi();
+
+        long startTime = System.currentTimeMillis();
+
+        BufferedImage img1 = Simapi.read(getClass().getResource("112_org.jpg"));
+
+        long loadTime = System.currentTimeMillis() - startTime;
+        startTime = System.currentTimeMillis();
+
+        BufferedImage scaled = null;
+        int loops = 100;
+
+        for (int i = 0; i < loops; i++) {
+            scaled = simapi.resize(img1, 200, 200, Color.RED, Simapi.POS_CENTER);
+        }
+
+        long scaleTime = System.currentTimeMillis() - startTime;
+
+        checkImage(new BufferedImage[] {scaled}, "Load time (msec): "
+            + loadTime
+            + " / Scale time (msec): "
+            + (scaleTime / loops)
+            + ". Is this ok?");
+    }
+
+    /**
+     * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
+     * 
+     * Because of inconsistent use of rounding, some images did contain a black or "missing" line
+     * at the bottom when scaling to certain target sizes. 
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testMissingLineIssue() throws Exception {
+
+        File input = new File(getClass().getResource("verm.gif").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:100,h:100,t:3");
+        byte[] scaled = scaler.scaleImage(imgBytes, "verm.gif");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'missing line' issue solved?");
+        assertEquals(100, img2.getWidth());
+        assertEquals(98, img2.getHeight()); // aspect ratio kept intact
+    }
+
+    /**
+     * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testBlackImageIssue() throws Exception {
+
+        File input = new File(getClass().getResource("jugendliche.jpg").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("w:200,h:200,t:1");
+        byte[] scaled = scaler.scaleImage(imgBytes, "jugendliche.jpg");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
+    }
+
+    /**
+     * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testScreenShotScaling() throws Exception {
+
+        Simapi simapi = new Simapi();
+        BufferedImage result;
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 405, true);
+        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x405 pixel in good quality?");
+
+        input = new File(getClass().getResource("screen_1280.png").getPath());
+        imgBytes = readFile(input);
+        img1 = Simapi.read(imgBytes);
+        result = simapi.resize(img1, 540, 432, true);
+        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x432 pixel in good quality?");
     }
 
     /**
@@ -224,72 +354,6 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
-     * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
-     * 
-     *  @throws Exception if the test fails
-     */
-    public void testBlackImageIssue() throws Exception {
-
-        File input = new File(getClass().getResource("jugendliche.jpg").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-
-        CmsImageScaler scaler = new CmsImageScaler();
-        scaler.parseParameters("w:200,h:200,t:1");
-        byte[] scaled = scaler.scaleImage(imgBytes, "jugendliche.jpg");
-        BufferedImage img2 = Simapi.read(scaled);
-
-        checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
-    }
-
-    /**
-     * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
-     * 
-     * Because of inconsistent use of rounding, some images did contain a black or "missing" line
-     * at the bottom when scaling to certain target sizes. 
-     * 
-     *  @throws Exception if the test fails
-     */
-    public void testMissingLineIssue() throws Exception {
-
-        File input = new File(getClass().getResource("verm.gif").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-
-        CmsImageScaler scaler = new CmsImageScaler();
-        scaler.parseParameters("w:100,h:100,t:3");
-        byte[] scaled = scaler.scaleImage(imgBytes, "verm.gif");
-        BufferedImage img2 = Simapi.read(scaled);
-
-        checkImage(new BufferedImage[] {img1, img2}, "Is the 'missing line' issue solved?");
-        assertEquals(100, img2.getWidth());
-        assertEquals(98, img2.getHeight()); // aspect ratio kept intact
-    }
-
-    /**
-     * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testBadScaleQualityIssue() throws Exception {
-
-        Simapi simapi = new Simapi();
-
-        BufferedImage img1 = Simapi.read(getClass().getResource("112_org.jpg"));
-        BufferedImage img2 = Simapi.read(getClass().getResource("113_org.jpg"));
-        BufferedImage img3 = Simapi.read(getClass().getResource("114_org.jpg"));
-
-        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
-        settings.setCompressionQuality(0.85f);
-
-        img1 = simapi.resize(img1, 150, 113, Color.RED, Simapi.POS_CENTER);
-        img2 = simapi.resize(img2, 150, 113, Color.RED, Simapi.POS_CENTER);
-        img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
-
-        checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
-    }
-
-    /**
      * Tests resizing a transparent image.<p>
      * 
      * @throws Exception if the test fails
@@ -308,29 +372,6 @@ public class TestSimapi extends VisualTestCase {
         checkImage(
             new BufferedImage[] {img1, img2},
             "Has it been scaled to 160x52 pixel and saved as PNG with transparent background ok?");
-    }
-
-    /**
-     * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
-     * 
-     *  @throws Exception if the test fails
-     */
-    public void testScreenShotScaling() throws Exception {
-
-        Simapi simapi = new Simapi();
-        BufferedImage result;
-
-        File input = new File(getClass().getResource("screen_1024.png").getPath());
-        byte[] imgBytes = readFile(input);
-        BufferedImage img1 = Simapi.read(imgBytes);
-        result = simapi.resize(img1, 540, 405, true);
-        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x405 pixel in good quality?");
-
-        input = new File(getClass().getResource("screen_1280.png").getPath());
-        imgBytes = readFile(input);
-        img1 = Simapi.read(imgBytes);
-        result = simapi.resize(img1, 540, 432, true);
-        checkImage(new BufferedImage[] {img1, result}, "Has it been scaled to 540x432 pixel in good quality?");
     }
 
     /**
@@ -527,45 +568,6 @@ public class TestSimapi extends VisualTestCase {
         checkImage(new BufferedImage[] {combined}, "Combined grayscale and shadow effects?");
         assertEquals(read.getWidth(), combined.getWidth());
         assertEquals(read.getHeight(), combined.getHeight());
-    }
-
-    /**
-     * Tests "not sharp enough" issue encountered when scaling large images to a very small size.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testNotSharpEnoughIssue() throws Exception {
-
-        Simapi simapi = new Simapi();
-
-        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
-        settings.setCompressionQuality(0.85f);
-
-        BufferedImage img1 = Simapi.read(getClass().getResource("_1_or.jpg"));
-        BufferedImage img2 = Simapi.read(getClass().getResource("_2_or.jpg"));
-        BufferedImage img3 = Simapi.read(getClass().getResource("_3_or.jpg"));
-
-        BufferedImage img1Tn = Simapi.read(getClass().getResource("_1_tn.jpg"));
-        BufferedImage img2Tn = Simapi.read(getClass().getResource("_2_tn.jpg"));
-        BufferedImage img3Tn = Simapi.read(getClass().getResource("_3_tn.jpg"));
-
-        img1 = simapi.resize(img1, 75, 113, Color.RED, Simapi.POS_CENTER);
-        img2 = simapi.resize(img2, 150, 100, Color.RED, Simapi.POS_CENTER);
-        img3 = simapi.resize(img3, 150, 100, Color.RED, Simapi.POS_CENTER);
-
-        checkImage(
-            new BufferedImage[] {img1, img1Tn, img2, img2Tn, img3, img3Tn},
-            "Are the images sharp enough? (Left: Simapi / Right: Photoshop)");
-
-        BufferedImage imgOri = Simapi.read(getClass().getResource("112_org.jpg"));
-
-        BufferedImage imgA = simapi.resize(imgOri, 600, 450, Color.RED, Simapi.POS_CENTER);
-        BufferedImage imgB = simapi.resize(imgOri, 400, 300, Color.RED, Simapi.POS_CENTER);
-        BufferedImage imgC = simapi.resize(imgOri, 300, 225, Color.RED, Simapi.POS_CENTER);
-        BufferedImage imgD = simapi.resize(imgOri, 200, 150, Color.RED, Simapi.POS_CENTER);
-        BufferedImage imgE = simapi.resize(imgOri, 150, 113, Color.RED, Simapi.POS_CENTER);
-
-        checkImage(new BufferedImage[] {imgA, imgB, imgC, imgD, imgE}, "Are the images sharp enough?");
     }
 
     /**
@@ -864,49 +866,6 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
-     * Tests "slow scaling" issue encountered with some JPEG's.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testSlowScalingIssue() throws Exception {
-
-        Simapi simapi = new Simapi();
-
-        long startTime = System.currentTimeMillis();
-
-        BufferedImage img1 = Simapi.read(getClass().getResource("slow_scale01.jpg"));
-        BufferedImage img2 = Simapi.read(getClass().getResource("slow_scale02.jpg"));
-        BufferedImage img3 = Simapi.read(getClass().getResource("slow_scale03.jpg"));
-
-        long loadTime = System.currentTimeMillis() - startTime;
-        startTime = System.currentTimeMillis();
-
-        img1 = simapi.resize(img1, 100, 100, Color.RED, Simapi.POS_CENTER);
-        img2 = simapi.resize(img2, 100, 100, Color.RED, Simapi.POS_CENTER);
-        img3 = simapi.resize(img3, 100, 100, Color.RED, Simapi.POS_CENTER);
-
-        long scaleTime = System.currentTimeMillis() - startTime;
-
-        checkImage(new BufferedImage[] {img1, img2, img3}, "Load time (msec): "
-            + loadTime
-            + " / Scale time (msec): "
-            + scaleTime
-            + ". Is this ok?");
-
-        File baseDir = new File(getClass().getResource("slow_scale01.jpg").getPath()).getParentFile();
-
-        simapi.write(img1, new File(baseDir, "w_slow_scale01.jpg"), Simapi.TYPE_JPEG);
-        simapi.write(img2, new File(baseDir, "w_slow_scale02.jpg"), Simapi.TYPE_JPEG);
-        simapi.write(img3, new File(baseDir, "w_slow_scale03.jpg"), Simapi.TYPE_JPEG);
-
-        img1 = Simapi.read(getClass().getResource("w_slow_scale01.jpg"));
-        img2 = Simapi.read(getClass().getResource("w_slow_scale02.jpg"));
-        img3 = Simapi.read(getClass().getResource("w_slow_scale03.jpg"));
-
-        checkImage(new BufferedImage[] {img1, img2, img3}, "Is default low quality OK for thumbnails?");
-    }
-
-    /**
      * Tests writing an image as GIF.<p>
      * 
      * @throws Exception if the test fails
@@ -998,5 +957,98 @@ public class TestSimapi extends VisualTestCase {
         simapi.write(img1, destination, Simapi.TYPE_JPEG);
         read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as JPEG in a _high_ quality version?");
+    }
+
+    /**
+     * Tests image cropping using an OpenCms image scaler instance.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testImageCroppingFromScaler() throws Exception {
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        byte[] imgBytes = readFile(input);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        byte[] scaled;
+        BufferedImage result;
+
+        scaler.parseParameters("cx:10,cy:10,cw:400,ch:400");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped using the scaler?");
+
+        // this use case is not supported since the scaler does not work with negative x,y positions
+        //        scaler.parseParameters("cx:0,cy:-100,cw:1250,ch:400");
+        //        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        //        result = Simapi.read(scaled);
+        //        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized) using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:0,cw:160,ch:120,w:800,h:600");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged) using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:0,cw:400,ch:300,w:160,h:120");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced) using the scaler?");
+
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        imgBytes = readFile(input);
+
+        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:transparent");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact using the scaler?");
+
+        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:#ff0000");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
+
+        scaler.parseParameters("h:500,w:1000,cx:21,cy:15,ch:23,cw:1050,c:#00ff00");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
+    }
+
+    /**
+     * Tests image cropping.<p>
+     * 
+     *  @throws Exception if the test fails
+     */
+    public void testImageCropping() throws Exception {
+
+        File input = new File(getClass().getResource("screen_1024.png").getPath());
+        Simapi simapi = new Simapi();
+        BufferedImage result, img1;
+
+        img1 = Simapi.read(input);
+
+        result = simapi.crop(img1, 10, 10, 400, 400);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped?");
+
+        result = simapi.crop(img1, 0, -100, 1250, 400);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped (oversized)?");
+
+        result = simapi.cropToSize(img1, 0, 0, 160, 120, 800, 600);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (enlarged)?");
+
+        result = simapi.cropToSize(img1, -50, -50, 400, 300, 160, 120);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped and resized (reduced)?");
+
+        // another test with an image that support transparent colors
+        input = new File(getClass().getResource("logo_alkacon_150_t.gif").getPath());
+        img1 = Simapi.read(input);
+
+        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact?");
+
+        result = simapi.cropToSize(img1, 0, 0, 100, 100, 200, 200, Color.RED);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color?");
+
+        result = simapi.cropToSize(img1, 21, 15, 1050, 23, 1000, 500, Color.GREEN);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped with green bg color and transformed?");
     }
 }

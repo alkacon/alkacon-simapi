@@ -35,11 +35,8 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.Transparency;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.FilteredImageSource;
@@ -376,10 +373,9 @@ public class Simapi {
         }
 
         // recast the AWT image into a BufferedImage (using alpha RGB)
-        BufferedImage result = new BufferedImage(
-            img.getWidth(null),
-            img.getHeight(null),
-            pg.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
+        BufferedImage result = new BufferedImage(img.getWidth(null), img.getHeight(null), pg.getColorModel().hasAlpha()
+        ? BufferedImage.TYPE_INT_ARGB
+        : BufferedImage.TYPE_INT_RGB);
 
         // draw the generated image to the result canvas and return
         Graphics2D g = result.createGraphics();
@@ -546,7 +542,7 @@ public class Simapi {
      */
     public BufferedImage crop(BufferedImage image, int x, int y, int width, int height, Color backgroundColor) {
 
-        if ((x < 0) || (y < 0) || (x + width >= image.getWidth()) || (y + height >= image.getHeight())) {
+        if ((x < 0) || (y < 0) || ((x + width) >= image.getWidth()) || ((y + height) >= image.getHeight())) {
             // crop area lies partly outside of image - blow up result image to fit
             int xpos = x;
             int ypos = y;
@@ -774,9 +770,17 @@ public class Simapi {
             if (widthScale < heightScale) {
                 heightScale = widthScale;
                 targetHeight = (int)(imageHeight * heightScale);
+                if ((imageHeight > 50) && (Math.abs(targetHeight - height) == 1)) {
+                    // "one off" rounding issue - let's keep the requested size for larger images
+                    targetHeight = height;
+                }
             } else if (widthScale > heightScale) {
                 widthScale = heightScale;
                 targetWidth = (int)(imageWidth * widthScale);
+                if ((imageWidth > 50) && (Math.abs(targetWidth - width) == 1)) {
+                    // "one off" rounding issue - let's keep the requested size for larger images
+                    targetWidth = width;
+                }
             }
         }
         return scale(image, widthScale, heightScale, targetWidth, targetHeight);
@@ -910,7 +914,7 @@ public class Simapi {
 
     /**
      * Resizes an image according to the width and height specified,
-     * cropping the image along the sides in case the required height and with can not be reached without 
+     * cropping the image along the sides in case the required height and width can not be reached without 
      * changing the apsect ratio of the image.<p>
      * 
      * Use the constants <code>{@link Simapi#POS_CENTER}</code> etc. to indicate the crop position.<p>
@@ -1011,35 +1015,27 @@ public class Simapi {
         int targetWidth,
         int targetHeight) {
 
-        int width = image.getWidth();
-        int height = image.getHeight();
+        if (m_renderSettings.isUseBlur() && ((widthScale < 0.575f) || (heightScale < 0.575f))) {
+            // must apply blur before scaling or the result image will look jagged
 
-        // ensure the image uses a RGB system color model (otherwise operation may take very long and results may be bad quality)
-        image = ensureImageIsSystemType(image, m_renderSettings.getTransparentReplaceColor() != COLOR_TRANSPARENT);
+            threadSetNice();
 
-        RenderingHints renderHints = m_renderSettings.getRenderingHints();
-        if (renderHints == RenderSettings.HINTS_QUALITY) {
-            // default render setting, adjust for thumbnail generation to avoid "slow scaling" issue 
-            if (((widthScale < 0.25f) && (heightScale < 0.25f))
-                || ((widthScale < 0.5f) && (width * widthScale < 101))
-                || ((heightScale < 0.5f) && (height * heightScale < 101))) {
-
-                // thumbnail generation, use speed settings
-                renderHints = RenderSettings.HINTS_SPEED;
+            int pixel = image.getWidth() * image.getHeight();
+            if (pixel > m_renderSettings.getMaximumBlurSize()) {
+                // input image too big - scale down to the maximum blur size first
+                // this is done to avoid "out of memory" errors and CPU overhead when blurring
+                double fac = Math.sqrt((double)m_renderSettings.getMaximumBlurSize() / pixel);
+                int height = (int)(image.getHeight() * fac);
+                int width = (int)(image.getWidth() * fac);
+                image = scale(image, width, height);
+                // recalculate the image scale for the reduced image
+                widthScale = (targetWidth / (float)width);
+                heightScale = (targetHeight / (float)height);
             }
-        }
 
-        threadSetNice();
-
-        double factor = ((image.getWidth() / (widthScale * width)) + (image.getHeight() / (heightScale * height))) / 2.0;
-        if (m_renderSettings.isUseBlur()
-            && ((width * height) < m_renderSettings.getMaximumBlurSize())
-            && ((widthScale < 0.575f) || (heightScale < 0.575f))) {
-            // must apply blur or the result will look jagged if scale is smaller then 0.5   
-            // (actually close to 0.5 it also looks jagged, so we use 0.575 instead)
-            // however, if the image is to big, "out of memory" issues may occur
-            int average = (width + height) / 2;
-            if ((factor < 5.0) && (average < 900)) {
+            double factor = ((image.getWidth() / (widthScale * image.getWidth())) + (image.getHeight() / (heightScale * image.getHeight()))) / 2.0;
+            int average = (image.getWidth() + image.getHeight()) / 2;
+            if (((factor < 5.0) && (average < 1000))) {
                 // image is quite small and suitable factor - use gaussian blur 
                 GaussianFilter gauss = new GaussianFilter();
                 double radius = Math.sqrt(2.0 * factor);
@@ -1049,8 +1045,9 @@ public class Simapi {
                 // image is rather large, use much faster box blur
                 double root = Math.sqrt(factor);
                 int radius;
-                if (factor < 2.5) {
+                if ((factor < 3.5) || (pixel > m_renderSettings.getMaximumBlurSize())) {
                     // this is a rather small scale factor, use Math.floor() or image might get blurry
+                    // also do this if the input image was pre-scaled
                     radius = (int)Math.floor(root);
                 } else {
                     // scale factor is rather large, use Math.round() for better result
@@ -1060,17 +1057,31 @@ public class Simapi {
                 blur.setRadius(radius);
                 image = blur.filter(image, null);
             }
+
+            threadSetNormal();
         }
 
-        // create the image scaling transformation
-        AffineTransform at = AffineTransform.getScaleInstance(widthScale, heightScale);
-        AffineTransformOp ato = new AffineTransformOp(at, renderHints);
+        return scale(image, targetWidth, targetHeight);
+    }
 
-        // must create the result image manually, otherwise the size of the result image may be 1 pixel off
+    /**
+     * Scale the image to the width and height to the given target dimensions.<p>
+     * 
+     * @param image the image to scale
+     * @param targetWidth the width of the target image
+     * @param targetHeight the height of the target image
+     * 
+     * @return the transformed image
+     */
+    public BufferedImage scale(BufferedImage image, int targetWidth, int targetHeight) {
+
         BufferedImage result = createImage(image.getColorModel(), targetWidth, targetHeight);
-        result = ato.filter(image, result);
+        Graphics2D g = result.createGraphics();
 
-        threadSetNormal();
+        g.setRenderingHints(m_renderSettings.getRenderingHints());
+        g.drawImage(image, 0, 0, targetWidth, targetHeight, null);
+        g.dispose();
+
         return result;
     }
 
@@ -1192,7 +1203,7 @@ public class Simapi {
 
         // obtain the writer for the image
         // this must work since it is already done in the #getImageType(String) call above
-        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByFormatName(formatName).next();
+        ImageWriter writer = ImageIO.getImageWritersByFormatName(formatName).next();
 
         // get default image writer parameter
         ImageWriteParam param = writer.getDefaultWriteParam();
