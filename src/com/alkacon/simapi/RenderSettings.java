@@ -94,18 +94,18 @@ public class RenderSettings {
         switch (baseMode) {
             case Simapi.RENDER_SPEED:
                 m_hints = HINTS_SPEED;
-                m_compressionQuality = 0.45f;
+                m_compressionQuality = 0.5f;
                 m_isUseBlur = false;
                 break;
             case Simapi.RENDER_MEDIUM:
                 m_hints = HINTS_MEDIUM;
-                m_compressionQuality = 0.65f;
+                m_compressionQuality = 0.75f;
                 m_isUseBlur = false;
                 break;
             case Simapi.RENDER_QUALITY:
             default:
                 m_hints = HINTS_QUALITY;
-                m_compressionQuality = 0.85f;
+                m_compressionQuality = 0.95f;
                 m_isUseBlur = true;
                 break;
         }

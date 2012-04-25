@@ -65,6 +65,44 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests "bad quality" issue encountered when scaling VERY large images to a small size.<p>
+     * 
+     * @throws Exception if the test fails
+     */
+    public void testBadScaleQualityIssue2() throws Exception {
+
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
+        settings.setCompressionQuality(0.97f);
+        Simapi simapi = new Simapi(settings);
+
+        BufferedImage img1 = Simapi.read(getClass().getResource("Messdiener.jpg"));
+        BufferedImage img2 = Simapi.read(getClass().getResource("Messdiener_sml.jpg"));
+
+        img1 = simapi.resize(img1, 800, 533, Color.RED, Simapi.POS_CENTER);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the quality ok? [Left: Simapi / Right: Prescaled]");
+
+        img1 = Simapi.read(getClass().getResource("img_0005.jpg"));
+        img1 = simapi.resize(img1, 800, 534, Color.RED, Simapi.POS_CENTER);
+
+        File baseDir = new File(getClass().getResource("img_0005.jpg").getPath()).getParentFile();
+        simapi.write(img1, new File(baseDir, "w_img_0005.jpg"), Simapi.TYPE_JPEG);
+        img1 = Simapi.read(getClass().getResource("w_img_0005.jpg"));
+
+        checkImage(new BufferedImage[] {img1}, "Was it witten as JPEG in a good quality?");
+    }
+
+    /**
+     * Stops the test.<p>
+     * 
+     * Uncomment in case only a few selected tests should be performed.<p>
+     */
+    public void testStop() {
+
+        System.exit(0);
+    }
+
+    /**
      * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
      * 
      * @throws Exception if the test fails
@@ -77,34 +115,11 @@ public class TestSimapi extends VisualTestCase {
         BufferedImage img2 = Simapi.read(getClass().getResource("113_org.jpg"));
         BufferedImage img3 = Simapi.read(getClass().getResource("114_org.jpg"));
 
-        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
-        settings.setCompressionQuality(0.85f);
-
         img1 = simapi.resize(img1, 150, 113, Color.RED, Simapi.POS_CENTER);
         img2 = simapi.resize(img2, 150, 113, Color.RED, Simapi.POS_CENTER);
         img3 = simapi.resize(img3, 150, 113, Color.RED, Simapi.POS_CENTER);
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is the quality ok?");
-    }
-
-    /**
-     * Tests "bad quality" issue encountered when scaling VERY large images to a small size.<p>
-     * 
-     * @throws Exception if the test fails
-     */
-    public void testBadScaleQualityIssue2() throws Exception {
-
-        Simapi simapi = new Simapi();
-
-        BufferedImage img1 = Simapi.read(getClass().getResource("Messdiener.jpg"));
-        BufferedImage img2 = Simapi.read(getClass().getResource("Messdiener_sml.jpg"));
-
-        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY);
-        settings.setCompressionQuality(0.85f);
-
-        img1 = simapi.resize(img1, 800, 533, Color.RED, Simapi.POS_CENTER);
-
-        checkImage(new BufferedImage[] {img1, img2}, "Is the quality ok? [Left: Simapi / Right: Prescaled]");
     }
 
     /**
@@ -148,16 +163,6 @@ public class TestSimapi extends VisualTestCase {
         img3 = Simapi.read(getClass().getResource("w_slow_scale03.jpg"));
 
         checkImage(new BufferedImage[] {img1, img2, img3}, "Is default low quality OK for thumbnails?");
-    }
-
-    /**
-     * Stops the test.<p>
-     * 
-     * Uncomment in case only a few selected tests should be performed.<p>
-     */
-    public void testStop() {
-
-        System.exit(0);
     }
 
     /**
