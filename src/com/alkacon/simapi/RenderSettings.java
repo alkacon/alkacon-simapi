@@ -29,7 +29,6 @@ import java.awt.Color;
 import java.awt.RenderingHints;
 import java.awt.image.ImageFilter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -55,7 +54,7 @@ public class RenderSettings {
     private RenderingHints m_hints;
 
     /** The internal list of image filters to apply to the image. */
-    private List m_imageFilters;
+    private List<ImageFilter> m_imageFilters;
 
     /** Used to control if blur is applied when downscaling an image. */
     private boolean m_isUseBlur;
@@ -117,7 +116,7 @@ public class RenderSettings {
             m_hints = newHints;
         }
         m_transparentReplaceColor = Color.WHITE;
-        m_imageFilters = new ArrayList();
+        m_imageFilters = new ArrayList<ImageFilter>();
         m_maximumBlurSize = (2500 * 2500);
         m_threadNicePriority = Thread.MIN_PRIORITY;
     }
@@ -132,7 +131,7 @@ public class RenderSettings {
     private static RenderingHints initHints(int mode) {
 
         // transformation rendering hints
-        HashMap hints = new HashMap();
+        RenderingHints hints = new RenderingHints(null);
 
         switch (mode) {
             case Simapi.RENDER_SPEED:
@@ -161,7 +160,7 @@ public class RenderSettings {
             default: // ignore
         }
 
-        return new RenderingHints(hints);
+        return hints;
     }
 
     /**
@@ -193,9 +192,9 @@ public class RenderSettings {
      * 
      * @return a copy of the list of image filters that should be applied to the processed image
      */
-    public List getImageFilters() {
+    public List<ImageFilter> getImageFilters() {
 
-        return new ArrayList(m_imageFilters);
+        return new ArrayList<ImageFilter>(m_imageFilters);
     }
 
     /**
