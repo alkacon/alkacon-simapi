@@ -1,9 +1,5 @@
 /*
- * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/RenderSettings.java,v $
- * Date   : $Date: 2007/11/20 15:59:13 $
- * Version: $Revision: 1.6 $
- *
- * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

@@ -71,10 +71,10 @@ import javax.swing.WindowConstants;
 import junit.framework.TestCase;
 
 /**
- * Visual test case allows to display an image after a test case has run, 
+ * Visual test case allows to display an image after a test case has run,
  * in order to manually confirm the image transformation works.<p>
  * 
- * @author Abey  
+ * @author Abey
  */
 public class VisualTestCase extends TestCase {
 
@@ -87,7 +87,7 @@ public class VisualTestCase extends TestCase {
         private static final long serialVersionUID = 7240900865709777915L;
 
         /**
-         * Public constructor.<p> 
+         * Public constructor.<p>
          * 
          * @param img the image to thos
          * @param width the width of the panel
@@ -106,10 +106,13 @@ public class VisualTestCase extends TestCase {
      */
     class PerformAction implements Runnable {
 
+        /** The event. */
         private ActionEvent event;
 
+        /** The thread. */
         private final Thread m_curr;
 
+        /** The frame. */
         private final JFrame m_jf;
 
         /**
@@ -135,6 +138,9 @@ public class VisualTestCase extends TestCase {
             return !event.getActionCommand().equals("No");
         }
 
+        /**
+         * @see java.lang.Runnable#run()
+         */
         public void run() {
 
             m_jf.dispose();
@@ -143,7 +149,7 @@ public class VisualTestCase extends TestCase {
 
         /**
          * Notifies the panel an event occured.<p>
-         *  
+         * 
          * @param evt the event that occured
          */
         public void setEvent(ActionEvent evt) {
@@ -151,9 +157,6 @@ public class VisualTestCase extends TestCase {
             this.event = evt;
         }
     }
-
-    /** Message to show on in the confirmation window. */
-    String m_message;
 
     /**
      * Public constructor.<p>
@@ -166,9 +169,9 @@ public class VisualTestCase extends TestCase {
     }
 
     /**
-     * Reads a file from the RFS and returns the file content.<p> 
+     * Reads a file from the RFS and returns the file content.<p>
      * 
-     * @param file the file to read 
+     * @param file the file to read
      * @return the read file content
      * 
      * @throws IOException in case of file access errors
@@ -197,20 +200,31 @@ public class VisualTestCase extends TestCase {
      * 
      * @param img the images to show
      * @param message the message to display
+
      */
+    @SuppressWarnings("deprecation")
     public void checkImage(final BufferedImage img[], final String message) {
 
         final Thread curr = Thread.currentThread();
-        m_message = message;
-        final JFrame jf = new JFrame("Simapi test case window");
+
+        StackTraceElement[] trace = Thread.currentThread().getStackTrace();
+        String method = "<unknown method>";
+        for (StackTraceElement e : trace) {
+            if (e.getClassName().startsWith("com.alkacon.simapi.Test")) {
+                method = e.getMethodName() + " - " + e.getClassName().substring("com.alkacon.simapi.".length());
+            }
+        }
+
+        final JFrame jf = new JFrame(method);
         jf.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        jf.getContentPane().add(new JLabel("  " + m_message, SwingConstants.LEFT), BorderLayout.NORTH);
+        jf.getContentPane().add(new JLabel("  " + message, SwingConstants.LEFT), BorderLayout.NORTH);
         final JPanel imgPanel = new JPanel();
         ImagePanel sp = null;
 
         for (int i = 0; i < img.length; i++) {
-            if (img[i] == null)
+            if (img[i] == null) {
                 continue;
+            }
             int w = img[i].getWidth() + 50;
             int h = img[i].getHeight() + 50;
             sp = new ImagePanel(img[i], w, h);
@@ -262,7 +276,7 @@ public class VisualTestCase extends TestCase {
             }
         }
         if (!pa.isOk()) {
-            fail("Failed : " + m_message);
+            fail("Failed : " + message);
         }
     }
 }

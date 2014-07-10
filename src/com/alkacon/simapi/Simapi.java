@@ -1,9 +1,5 @@
 /*
- * File   : $Source: /alkacon/cvs/AlkaconSimapi/src/com/alkacon/simapi/Simapi.java,v $
- * Date   : $Date: 2008/07/15 12:34:37 $
- * Version: $Revision: 1.16 $
- *
- * Copyright (c) 2007 Alkacon Software GmbH (http://www.alkacon.com)
+ * Copyright (c) Alkacon Software GmbH (http://www.alkacon.com)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,11 +21,12 @@
 
 package com.alkacon.simapi;
 
+import com.alkacon.simapi.CmykJpegReader.JPEGImageReaderSpi;
+import com.alkacon.simapi.GifWriter.GifImageWriterSpi;
+import com.alkacon.simapi.GifWriter.Quantize;
 import com.alkacon.simapi.filter.WholeImageFilter;
 import com.alkacon.simapi.filter.buffered.BoxBlurFilter;
 import com.alkacon.simapi.filter.buffered.GaussianFilter;
-import com.alkacon.simapi.util.GifImageWriterSpi;
-import com.alkacon.simapi.util.Quantize;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -57,6 +54,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.spi.IIORegistry;
+import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.spi.ImageWriterSpi;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -152,7 +150,7 @@ public class Simapi {
         // register the Alkacon GIF encoder with the Java ImageIO registry
         ImageWriterSpi alkaconGifSpi = new GifImageWriterSpi();
         IIORegistry.getDefaultInstance().registerServiceProvider(alkaconGifSpi);
-        Iterator i = null;
+        Iterator<ImageWriterSpi> i = null;
         try {
             i = IIORegistry.getDefaultInstance().getServiceProviders(ImageWriterSpi.class, true);
         } catch (Throwable t) {
@@ -160,7 +158,7 @@ public class Simapi {
         }
         if (i != null) {
             while (i.hasNext()) {
-                ImageWriterSpi spi = (ImageWriterSpi)i.next();
+                ImageWriterSpi spi = i.next();
                 if (spi.getClass() != GifImageWriterSpi.class) {
                     String[] formats = spi.getFormatNames();
                     for (int j = 0; j < formats.length; j++) {
@@ -174,6 +172,34 @@ public class Simapi {
                 }
             }
         }
+
+        // register the CMYK JPEG image reader
+        JPEGImageReaderSpi cmykJpegSpi = new JPEGImageReaderSpi();
+        IIORegistry.getDefaultInstance().registerServiceProvider(cmykJpegSpi);
+        Iterator<ImageReaderSpi> k = null;
+        try {
+            k = IIORegistry.getDefaultInstance().getServiceProviders(ImageReaderSpi.class, true);
+        } catch (Throwable t) {
+            t.printStackTrace(System.err);
+        }
+        if (k != null) {
+            while (k.hasNext()) {
+                ImageReaderSpi spi = k.next();
+                // System.out.println(spi.getPluginClassName());
+                if (spi.getClass() != JPEGImageReaderSpi.class) {
+                    String[] formats = spi.getFormatNames();
+                    for (int j = 0; j < formats.length; j++) {
+                        String format = formats[j];
+                        if ("jpg".equals(format.toLowerCase())) {
+                            // the SPI can read JPEGs, change order so that CMYK comes first
+                            IIORegistry.getDefaultInstance().setOrdering(ImageReaderSpi.class, cmykJpegSpi, spi);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     /**
@@ -226,7 +252,7 @@ public class Simapi {
         }
 
         // check if a writer for the image name can be found
-        Iterator iter = ImageIO.getImageWritersByFormatName(type);
+        Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName(type);
         if (iter.hasNext()) {
             // type can be resolved
             return type;
@@ -396,9 +422,7 @@ public class Simapi {
     public Rectangle applyFilterDimensions(int width, int height) {
 
         Rectangle base = new Rectangle(width, height);
-        Iterator i = m_renderSettings.getImageFilters().iterator();
-        while (i.hasNext()) {
-            ImageFilter filter = (ImageFilter)i.next();
+        for (ImageFilter filter : m_renderSettings.getImageFilters()) {
             if (filter instanceof WholeImageFilter) {
                 WholeImageFilter wholeFilter = (WholeImageFilter)filter;
                 base = wholeFilter.getTransformedSpace(base);
@@ -421,9 +445,7 @@ public class Simapi {
 
         threadSetNice();
 
-        Iterator i = m_renderSettings.getImageFilters().iterator();
-        while (i.hasNext()) {
-            ImageFilter filter = (ImageFilter)i.next();
+        for (ImageFilter filter : m_renderSettings.getImageFilters()) {
             image = applyFilter(image, filter);
         }
 
@@ -794,7 +816,7 @@ public class Simapi {
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
-     * @param backgroundColor
+     * @param backgroundColor the background color to use
      * @param position the position to place the scaled image at
      * 
      * @return the transformed image
@@ -812,7 +834,7 @@ public class Simapi {
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
-     * @param backgroundColor
+     * @param backgroundColor the background color to use
      * @param position the position to place the scaled image at
      * @param blowup if false, smaller images will not be enlarged to fit in the target dimensions
      * 
@@ -1033,17 +1055,17 @@ public class Simapi {
                 heightScale = (targetHeight / (float)height);
             }
 
-            double factor = ((image.getWidth() / (widthScale * image.getWidth())) + (image.getHeight() / (heightScale * image.getHeight()))) / 2.0;
+            double factor = ((1 / widthScale) + (1 / heightScale)) / 2.0;
             int average = (image.getWidth() + image.getHeight()) / 2;
-            if (((factor < 5.0) && (average < 1000))) {
+            if (((factor < 10.0) && (average < 1000))) {
                 // image is quite small and suitable factor - use gaussian blur 
                 GaussianFilter gauss = new GaussianFilter();
-                double radius = Math.sqrt(2.0 * factor);
+                double radius = Math.sqrt(1.5 * factor);
                 gauss.setRadius((float)radius);
                 image = gauss.filter(image, null);
             } else {
                 // image is rather large, use much faster box blur
-                double root = Math.sqrt(factor);
+                double root = Math.sqrt(0.75 * factor);
                 int radius;
                 if ((factor < 3.5) || (pixel > m_renderSettings.getMaximumBlurSize())) {
                     // this is a rather small scale factor, use Math.floor() or image might get blurry
@@ -1203,7 +1225,7 @@ public class Simapi {
 
         // obtain the writer for the image
         // this must work since it is already done in the #getImageType(String) call above
-        ImageWriter writer = (ImageWriter)ImageIO.getImageWritersByFormatName(formatName).next();
+        ImageWriter writer = ImageIO.getImageWritersByFormatName(formatName).next();
 
         // get default image writer parameter
         ImageWriteParam param = writer.getDefaultWriteParam();
@@ -1225,6 +1247,9 @@ public class Simapi {
         stream.close();
     }
 
+    /**
+     * Lower the current thread priority in order not to block other threads while image operations are performed.<p> 
+     */
     private void threadSetNice() {
 
         Thread t = Thread.currentThread();
@@ -1238,6 +1263,9 @@ public class Simapi {
         }
     }
 
+    /**
+     * Set the current thread priority to normal.<p> 
+     */
     private void threadSetNormal() {
 
         Thread t = Thread.currentThread();
