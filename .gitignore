@@ -13,6 +13,6 @@
 # do a 'No Assume unchanged' first.
 #
 /bin
-/.project
+/.settings
 /.settings/*
-
+/.gradle
