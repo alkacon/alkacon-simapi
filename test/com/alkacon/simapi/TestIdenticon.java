@@ -54,9 +54,10 @@ public class TestIdenticon extends VisualTestCase {
         suite.setName(TestIdenticon.class.getName());
 
         suite.addTest(new TestIdenticon("testIdenticonShapes"));
-        suite.addTest(new TestIdenticon("test4x4IdenticonReservedColor"));
         suite.addTest(new TestIdenticon("test4x4Identicon"));
         suite.addTest(new TestIdenticon("test4x4IdenticonVariability"));
+        suite.addTest(new TestIdenticon("test4x4IdenticonReservedColor"));
+        suite.addTest(new TestIdenticon("test4x4IdenticonSizes"));
 
         TestSetup wrapper = new TestSetup(suite);
         return wrapper;
@@ -94,6 +95,8 @@ public class TestIdenticon extends VisualTestCase {
 
         IdentIcon renderer = new IdentIcon();
         renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
+        renderer.setSize(80);
+        renderer.setBackgroundColor(Color.LIGHT_GRAY);
         BufferedImage icon1 = renderer.render("ia", true);
         BufferedImage icon2 = renderer.render("hb", 0xff, 0xc8, 0x46);
         BufferedImage icon3 = renderer.render("gc", 0xdf, 0xc8, 0x46);
@@ -110,6 +113,30 @@ public class TestIdenticon extends VisualTestCase {
     }
 
     /**
+     * Tests 4x4 identicon generation in different sizes.<p>
+     *
+     *  @throws Exception if the test fails
+     */
+    public void test4x4IdenticonSizes() throws Exception {
+
+        IdentIcon renderer = new IdentIcon();
+        renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
+
+        BufferedImage icon1 = renderer.render("ccc", 20);
+        BufferedImage icon2 = renderer.render("ddd", 30);
+        BufferedImage icon3 = renderer.render("ggg", 40);
+        BufferedImage icon4 = renderer.render("fff", 60);
+        BufferedImage icon5 = renderer.render("ggg", 80);
+        BufferedImage icon6 = renderer.render("hhh", 100);
+        BufferedImage icon7 = renderer.render("iii", 120);
+        BufferedImage icon8 = renderer.render("eee", true, 160);
+
+        checkImage(
+            new BufferedImage[] {icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8},
+            "4x4 identicon sizes ok?");
+    }
+
+    /**
      * Tests 4x4 identicon generation vaiability.<p>
      *
      *  @throws Exception if the test fails
@@ -117,8 +144,6 @@ public class TestIdenticon extends VisualTestCase {
     public void test4x4IdenticonVariability() throws Exception {
 
         IdentIcon renderer = new IdentIcon();
-        renderer.setSize(80);
-        renderer.setBackgroundColor(Color.LIGHT_GRAY);
         BufferedImage icon1 = renderer.render("a", 0xb3, 0x1b, 0x34);
         BufferedImage icon2 = renderer.render("b", 0x00, 0x30, 0x82);
         BufferedImage icon3 = renderer.render("c");
@@ -150,4 +175,5 @@ public class TestIdenticon extends VisualTestCase {
 
         checkImage(results, "Section shapes ok?");
     }
+
 }

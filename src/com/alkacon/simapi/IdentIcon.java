@@ -346,7 +346,7 @@ public class IdentIcon {
      */
     public BufferedImage render(String input) {
 
-        return renderIcon(hash(input));
+        return render(input, false, getSize());
     }
 
     /**
@@ -359,10 +359,45 @@ public class IdentIcon {
      */
     public BufferedImage render(String input, boolean allowProtected) {
 
+        return render(input, allowProtected, getSize());
+    }
+
+    /**
+     * Renders the IdentIcon for the given input String with the given size.<p>
+     *
+     * Good values for the size parameter should set in dependency with the patch size set with
+     * {@link #getPatchSize()}. The largest size should be the patch size multiplied by four.<p>
+     *
+     * @param input the input String to render the IdentIcon for
+     * @param allowProtected controls if the reserves color set by {@link #getReservedColor()} can be used or not
+     * @param size the target size of the output image
+     *
+     * @return the IdentIcon for the given input String
+     */
+    public BufferedImage render(String input, boolean allowProtected, int size) {
+
         byte[] hash = hash(input);
         hash[6] = allowProtected ? (byte)1 : (byte)0;
 
-        return renderIcon(hash);
+        return renderIcon(hash, size);
+    }
+
+    /**
+     * Renders the IdentIcon for the given input String.<p>
+     *
+     * Good values for the size parameter should set in dependency with the patch size set with
+     * {@link #getPatchSize()}. The largest size should be the patch size multiplied by four.<p>
+     *
+     * The protected color in this case is NOT allowed to be used for the generated icon.<p>
+     *
+     * @param input the input String to render the IdentIcon for
+     * @param size the target size of the output image
+     *
+     * @return the IdentIcon for the given input String
+     */
+    public BufferedImage render(String input, int size) {
+
+        return render(input, false, size);
     }
 
     /**
@@ -385,7 +420,7 @@ public class IdentIcon {
         hash[3] = (byte)green;
         hash[4] = (byte)red;
 
-        return renderIcon(hash);
+        return renderIcon(hash, getSize());
     }
 
     /**
@@ -577,10 +612,11 @@ public class IdentIcon {
      * Renders the IdentIcon based on the input hash, using the internal parameters.<p>
      *
      * @param hash the hash to render
+     * @param size the size of the image to generate
      *
      * @return the IdentIcon based on the input hash
      */
-    protected BufferedImage renderIcon(byte[] hash) {
+    protected BufferedImage renderIcon(byte[] hash, int size) {
 
         // -------------------------------------------------
         // PREPARE
@@ -621,8 +657,8 @@ public class IdentIcon {
                     middleColor = fill;
                 }
             } else {
-                fill = m_reservedColor;
-                // middleColor = fill.brighter();
+                middleColor = m_reservedColor;
+                fill = middleColor.brighter();
                 sideInvert = false;
                 cornerInvert = false;
             }
@@ -640,7 +676,6 @@ public class IdentIcon {
         // RENDER
         //
 
-        int size = getSize();
         BufferedImage targetImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
         Graphics2D g = targetImage.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
