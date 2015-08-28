@@ -13,7 +13,7 @@
  *
  * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -37,7 +37,7 @@ public class TestImageScaler extends VisualTestCase {
 
     /**
      * Default JUnit constructor.<p>
-     * 
+     *
      * @param params JUnit parameters
      */
     public TestImageScaler(String params) {
@@ -47,7 +47,7 @@ public class TestImageScaler extends VisualTestCase {
 
     /**
      * Test suite for this test class.<p>
-     * 
+     *
      * @return the test suite
      */
     public static Test suite() {
@@ -55,6 +55,7 @@ public class TestImageScaler extends VisualTestCase {
         TestSuite suite = new TestSuite();
         suite.setName(TestImageScaler.class.getName());
 
+        suite.addTest(new TestImageScaler("testPointCroppingFromScaler"));
         suite.addTest(new TestImageScaler("testBlackImageIssue"));
         suite.addTest(new TestImageScaler("testMissingLineIssue"));
         suite.addTest(new TestImageScaler("testImageCroppingFromScaler"));
@@ -66,7 +67,7 @@ public class TestImageScaler extends VisualTestCase {
 
     /**
      * Tests an issue where certain JPEG images have are reduced to a "black image" when scaling.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testBlackImageIssue() throws Exception {
@@ -85,7 +86,7 @@ public class TestImageScaler extends VisualTestCase {
 
     /**
      * Tests image cropping using an OpenCms image scaler instance.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testImageCroppingFromScaler() throws Exception {
@@ -139,10 +140,10 @@ public class TestImageScaler extends VisualTestCase {
 
     /**
      * Tests an issue with a "missing line" when scaling certain pixel sizes.<p>
-     * 
+     *
      * Because of inconsistent use of rounding, some images did contain a black or "missing" line
-     * at the bottom when scaling to certain target sizes. 
-     * 
+     * at the bottom when scaling to certain target sizes.
+     *
      *  @throws Exception if the test fails
      */
     public void testMissingLineIssue() throws Exception {
@@ -162,8 +163,67 @@ public class TestImageScaler extends VisualTestCase {
     }
 
     /**
+     * Tests cropping an image with a given middle point using an OpenCms image scaler instance.<p>
+     *
+     *  @throws Exception if the test fails
+     */
+    public void testPointCroppingFromScaler() throws Exception {
+
+        File input = new File(getClass().getResource("Messdiener_sml.jpg").getPath());
+        byte[] imgBytes = readFile(input);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        byte[] scaled;
+        BufferedImage result;
+
+        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:2");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(
+            new BufferedImage[] {result},
+            "Has it been cropped around the point with original pixels using the scaler?");
+
+        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:1");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(
+            new BufferedImage[] {result},
+            "Has it been cropped around the point and downscaled using the scaler?");
+
+        scaler.parseParameters("cx:461,cy:506,cw:200,ch:100,t:2");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(
+            new BufferedImage[] {result},
+            "Has it been cropped around the point with offset and original pixels using the scaler?");
+
+        input = new File(getClass().getResource("CMYK-p2.jpg").getPath());
+        imgBytes = readFile(input);
+        scaler.parseParameters("cx:93,cy:154,cw:500,ch:150,t:1");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped around the point and upscaled using the scaler?");
+
+        input = new File(getClass().getResource("CMYK-p4.jpg").getPath());
+        imgBytes = readFile(input);
+        scaler.parseParameters("cx:291,cy:420,cw:200,ch:200,t:1");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(
+            new BufferedImage[] {result},
+            "Has it been cropped around the point and downscaled using the scaler?");
+
+        input = new File(getClass().getResource("_3_tn.jpg").getPath());
+        imgBytes = readFile(input);
+        scaler.parseParameters("cx:57,cy:50,cw:200,ch:200,t:1");
+        scaled = scaler.scaleImage(imgBytes, "/dummy.png");
+        result = Simapi.read(scaled);
+        checkImage(new BufferedImage[] {result}, "Has it been cropped around the point and upscaled using the scaler?");
+    }
+
+    /**
      * Tests resizing a transparent image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testScaleTransparentIssue() throws Exception {

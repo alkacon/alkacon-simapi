@@ -13,7 +13,7 @@
  *
  * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -60,7 +60,7 @@ import javax.imageio.stream.ImageOutputStream;
 
 /**
  * <b>SIM</b>ple <b>IM</b>age <b>API</b> (SIMAPI) that provides convenient access to commonly used imaging operations.<p>
- * 
+ *
  * @author Alexander Kandzior
  */
 public class Simapi {
@@ -101,6 +101,24 @@ public class Simapi {
     /** Indicates to use the <code>QUALITY</code> render settings (default). */
     public static final int RENDER_QUALITY = 0;
 
+    /**
+     * Indicates to use alternative <code>BICUBIC</code> quality render settings.<p>
+     *
+     * The difference to {@link #RENDER_QUALITY} is that bicubic (instead of bilinear)
+     * scaling is used. Also blurring of the image in advance is not applied.<p>
+     */
+    public static final int RENDER_QUALITY_BICUBIC = 3;
+
+    /**
+     * Indicates to use alternative <code>SOFT</code> quality render settings.<p>
+     *
+     * The difference to {@link #RENDER_QUALITY} is that the blur factor applied to the image
+     * is higher, resulting in softer images when scaling down.
+     * This is useful for scaling down "hard" images like screen shots, otherwise scaled font letters
+     * may look jagged.<p>
+     */
+    public static final int RENDER_QUALITY_SOFT = 4;
+
     /** Indicates to use the <code>SPEED</code> render settings. */
     public static final int RENDER_SPEED = 2;
 
@@ -124,24 +142,6 @@ public class Simapi {
 
     /** Rendering settings for the image generation / scaling / saving. */
     private RenderSettings m_renderSettings;
-
-    /**
-     * Creates a new simapi instance using the default render settings ({@link #RENDER_QUALITY}).<p>     *
-     */
-    public Simapi() {
-
-        this(new RenderSettings(RENDER_QUALITY));
-    }
-
-    /**
-     * Creates a new simapi instance with the specified render settings.<p>
-     * 
-     * @param renderSettings the render settings to use
-     */
-    public Simapi(RenderSettings renderSettings) {
-
-        m_renderSettings = renderSettings;
-    }
 
     /**
      * Register the GIF encoder.<p>
@@ -203,21 +203,39 @@ public class Simapi {
     }
 
     /**
+     * Creates a new simapi instance using the default render settings ({@link #RENDER_QUALITY}).<p>     *
+     */
+    public Simapi() {
+
+        this(new RenderSettings(RENDER_QUALITY));
+    }
+
+    /**
+     * Creates a new simapi instance with the specified render settings.<p>
+     *
+     * @param renderSettings the render settings to use
+     */
+    public Simapi(RenderSettings renderSettings) {
+
+        m_renderSettings = renderSettings;
+    }
+
+    /**
      * Returns the image type from the given file name based on the file suffix (extension)
      * and the available image writers.<p>
-     * 
-     * For example, for the file name "alkacon.gif" the type is GIF, for 
-     * "alkacon.jpeg" is is "JPEG" etc.<p> 
-     * 
+     *
+     * For example, for the file name "alkacon.gif" the type is GIF, for
+     * "alkacon.jpeg" is is "JPEG" etc.<p>
+     *
      * In case the input filename has no suffix, or there is no known image writer for the format defined
      * by the suffix, <code>null</code> is returned.<p>
-     * 
+     *
      * Any non-null result can be used if an image type input value is required.<p>
-     * 
+     *
      * @param filename the file name to get the type for
-     *  
-     * @return the image type from the given file name based on the suffix and the available image writers, 
-     *      or null if no image writer is available for the format 
+     *
+     * @return the image type from the given file name based on the suffix and the available image writers,
+     *      or null if no image writer is available for the format
      */
     public static String getImageType(String filename) {
 
@@ -264,12 +282,12 @@ public class Simapi {
 
     /**
      * Loads an image from a byte array
-     * 
+     *
      * @param source the byte array to read the image from
-     * 
+     *
      * @return the loaded image
-     * 
-     * @throws IOException in case the image could not be loaded 
+     *
+     * @throws IOException in case the image could not be loaded
      */
     public static BufferedImage read(byte[] source) throws IOException {
 
@@ -278,12 +296,12 @@ public class Simapi {
 
     /**
      * Loads an image from a local file.<p>
-     * 
+     *
      * @param source the file to read the input image from
-     * 
+     *
      * @return the loaded image
-     * 
-     * @throws IOException in case the image could not be loaded 
+     *
+     * @throws IOException in case the image could not be loaded
      */
     public static BufferedImage read(File source) throws IOException {
 
@@ -292,11 +310,11 @@ public class Simapi {
 
     /**
      * Loads an image from an InputStream.<p>
-     * 
+     *
      * @param source the input stream to read the input image from
-     * 
+     *
      * @return the loaded image
-     * 
+     *
      * @throws IOException in case the image could not be loaded
      */
     public static BufferedImage read(InputStream source) throws IOException {
@@ -306,12 +324,12 @@ public class Simapi {
 
     /**
      * Loads an image from a local file whose path is supplied as a String
-     * 
+     *
      * @param source the path to the local file to read the input image from
-     * 
+     *
      * @return the loaded image
-     * 
-     * @throws IOException in case the image could not be loaded 
+     *
+     * @throws IOException in case the image could not be loaded
      */
     public static BufferedImage read(String source) throws IOException {
 
@@ -320,12 +338,12 @@ public class Simapi {
 
     /**
      * Loads an image from a URL.<p>
-     * 
+     *
      * @param source the URL to read the input image from
-     * 
+     *
      * @return the loaded image
-     * 
-     * @throws IOException in case the image could not be loaded      
+     *
+     * @throws IOException in case the image could not be loaded
      */
     public static BufferedImage read(URL source) throws IOException {
 
@@ -333,13 +351,13 @@ public class Simapi {
     }
 
     /**
-     * Returns an image that is ensured the be of either {@link BufferedImage#TYPE_INT_RGB} or 
-     * {@link BufferedImage#TYPE_INT_ARGB}.<p> 
-     * 
+     * Returns an image that is ensured the be of either {@link BufferedImage#TYPE_INT_RGB} or
+     * {@link BufferedImage#TYPE_INT_ARGB}.<p>
+     *
      * Ensuring the image is of one of the possible return types is done before applying an image filter transformation
      * since if the image is of a different (not native) type, the transformation can take very long
      * and consume a lot of resources.<p>
-     * 
+     *
      * @param image the original image
      * @param allowTransparent if <code>true</code>, transparent (alpha layer) pixels is allowed
      * @return an image that is ensured the be of a system type
@@ -369,7 +387,7 @@ public class Simapi {
         g.drawImage(image, 0, 0, null);
         g.dispose();
 
-        // flush original - doesn't actually do anything but looks right to me anyway 
+        // flush original - doesn't actually do anything but looks right to me anyway
         image.flush();
         image = null;
 
@@ -378,10 +396,10 @@ public class Simapi {
 
     /**
      * Applies the given filter to the image.<p>
-     * 
+     *
      * @param image the image to apply the filter to
      * @param filter the filter to apply
-     * 
+     *
      * @return the image with the filter applied
      */
     public BufferedImage applyFilter(BufferedImage image, ImageFilter filter) {
@@ -411,13 +429,13 @@ public class Simapi {
     }
 
     /**
-     * Calculates the image size for an image after all filters returned by {@link RenderSettings#getImageFilters()}  
+     * Calculates the image size for an image after all filters returned by {@link RenderSettings#getImageFilters()}
      * have been applied.<p>
-     *  
+     *
      * @param width the image width
      * @param height the image height
-     *  
-     * @return the image size after all filters have been applied 
+     *
+     * @return the image size after all filters have been applied
      */
     public Rectangle applyFilterDimensions(int width, int height) {
 
@@ -432,10 +450,10 @@ public class Simapi {
     }
 
     /**
-     * Applies all filters returned by {@link RenderSettings#getImageFilters()} to the given image.<p>  
-     * 
+     * Applies all filters returned by {@link RenderSettings#getImageFilters()} to the given image.<p>
+     *
      * @param image the image to apply the filters to
-     * 
+     *
      * @return the image with the filters applied
      */
     public BufferedImage applyFilters(BufferedImage image) {
@@ -456,14 +474,14 @@ public class Simapi {
 
     /**
      * Crops an image according to the width and height specified.<p>
-     * 
+     *
      * Use the constants <code>{@link Simapi#POS_CENTER}</code> etc. to indicate the crop position.<p>
-     * 
+     *
      * @param image the image to crop
      * @param width the width of the target image
      * @param height the height of the target image
      * @param cropPosition the position to crop the image at
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage crop(BufferedImage image, int width, int height, int cropPosition) {
@@ -521,22 +539,22 @@ public class Simapi {
     }
 
     /**
-     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>. 
-     * 
-     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>.
+     *
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and
      * the transparent color is used for the additional background pixels.
      * If the image does not support transparent pixels, the transparent replacement color (whit by default)
-     * will be used.<p> 
-     * 
+     * will be used.<p>
+     *
      * @param image the image to crop
      * @param x the x position where the crop starts
      * @param y the y position where the crop starts
-     * @param width the width of the cropped target image 
-     * @param height the height of the cropped target image 
-     * 
-     * @return a cropped part of the given image from the specified 
+     * @param width the width of the cropped target image
+     * @param height the height of the cropped target image
+     *
+     * @return a cropped part of the given image from the specified
      *      <code>x,y</code> point to the given <code>width,height</code>
-     *      
+     *
      * @see #crop(BufferedImage, int, int, int, int, Color)
      */
     public BufferedImage crop(BufferedImage image, int x, int y, int width, int height) {
@@ -545,21 +563,21 @@ public class Simapi {
     }
 
     /**
-     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>. 
-     * 
-     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
-     * the given background replace color is used for the additional pixels.<p> 
-     * 
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>.
+     *
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and
+     * the given background replace color is used for the additional pixels.<p>
+     *
      * @param image the image to crop
      * @param x the x position where the crop starts
      * @param y the y position where the crop starts
-     * @param width the width of the cropped target image 
+     * @param width the width of the cropped target image
      * @param height the height of the cropped target image
-     * @param backgroundColor the color to use if the background must be enlarged 
-     * 
-     * @return a cropped part of the given image from the specified 
+     * @param backgroundColor the color to use if the background must be enlarged
+     *
+     * @return a cropped part of the given image from the specified
      *      <code>x,y</code> point to the given <code>width,height</code>
-     *      
+     *
      * @see #crop(BufferedImage, int, int, int, int)
      */
     public BufferedImage crop(BufferedImage image, int x, int y, int width, int height, Color backgroundColor) {
@@ -616,27 +634,111 @@ public class Simapi {
     }
 
     /**
-     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>,
-     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>. 
-     * 
-     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
-     * the transparent color is used for the additional background pixels.
-     * If the image does not support transparent pixels, the transparent replacement color (whit by default)
-     * will be used.<p> 
-     * 
+     * Crops a part of the given image around the specified <code>x,y</code> point
+     * to the dimensions specified in <code>targetWidth,targetHeight</code>.<p>
+     *
+     * In case the target dimensions are larger then the original image, the cropped image
+     * part is upscaled to the target size.<p>
+     *
+     * In case the target dimensions are smaller, the <code>downScale</code> parameter can be used
+     * to control the crop: if <code>false</code> the the cropped image is taken from the original pixels,
+     * if <code>true</code> then the image is rist downscaled to the target dimensions and then cropped.<p>
+     *
      * The aspect ratio of the target image is not kept.<p>
-     * 
+     *
+     * @param image the image to crop
+     * @param x the x position where the crop starts
+     * @param y the y position where the crop starts
+     * @param scale indicates if a large image should be downscaled first
+     * @param targetWidth the width of the target image
+     * @param targetHeight the width of the target image
+     *
+     * @return a cropped part of the given image from the specified <code>x,y</code> point
+     *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code>
+     *
+     * @see #cropToSize(BufferedImage, int, int, int, int, int, int, Color)
+     */
+    public BufferedImage cropPointToSize(
+        BufferedImage image,
+        int x,
+        int y,
+        boolean scale,
+        int targetWidth,
+        int targetHeight) {
+
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+
+        double cW = targetWidth;
+        double cH = targetHeight;
+
+        if ((imageWidth <= targetWidth) || (imageHeight <= targetHeight) || scale) {
+
+            // the target dimensions do NOT fit in the original image, or we should downscale
+            // in this case we must first scale the cropping dimensions,
+            // and later rescale the result image to the requested size
+
+            double widthScale = (targetWidth / (double)imageWidth);
+            double heightScale = (targetHeight / (double)imageHeight);
+
+            // keep image aspect ratio, find best scale for the result image
+            if (widthScale >= heightScale) {
+                heightScale = widthScale;
+            } else {
+                widthScale = heightScale;
+            }
+
+            cW = cW / widthScale;
+            cH = cH / heightScale;
+        }
+
+        // now the target dimensions do fit in the original image
+        // if required, make sure the point is adjusted so that the result does not run outside of the image
+
+        double tW = cW / 2.0;
+        double tH = cH / 2.0;
+
+        double dX = x - tW;
+        double dY = y - tH;
+
+        if (dX < 0.0) {
+            dX = 0.0;
+        } else if ((x + tW) > imageWidth) {
+            dX = dX - ((x + tW) - imageWidth);
+        }
+        if (dY < 0.0) {
+            dY = 0.0;
+        } else if ((y + tH) > imageHeight) {
+            dY = dY - ((y + tH) - imageHeight);
+        }
+
+        image = cropToSize(image, (int)dX, (int)dY, (int)cW, (int)cH, targetWidth, targetHeight, COLOR_TRANSPARENT);
+
+        return image;
+    }
+
+    /**
+     * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>,
+     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>.
+     *
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and
+     * the transparent color is used for the additional background pixels.
+     * If the image does not support transparent pixels, the transparent replacement color (white by default)
+     * will be used.<p>
+     *
+     * The aspect ratio of the target image is not kept.<p>
+     *
      * @param image the image to crop
      * @param x the x position where the crop starts
      * @param y the y position where the crop starts
      * @param width the width of the cropped area from the source image
      * @param height the height of the cropped area from the source image
-     * @param targetWidth the width of the target image  
-     * @param targetHeight the width of the target image 
-     * 
-     * @return a cropped part of the given image from the specified <code>x,y</code> point 
+     * @param targetWidth the width of the target image
+     * @param targetHeight the width of the target image
+     *
+     * @return a cropped part of the given image from the specified <code>x,y</code> point
      *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code>
-     *      
+     *
      * @see #cropToSize(BufferedImage, int, int, int, int, int, int, Color)
      */
     public BufferedImage cropToSize(
@@ -653,25 +755,25 @@ public class Simapi {
 
     /**
      * Crops a part of the given image from the specified <code>x,y</code> point to the given <code>width,height</code>,
-     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>. 
-     * 
-     * Should the target image rectangle be outside of the source image, the source image is enlarged and 
-     * the given background replace color is used for the additional pixels.<p> 
-     * 
+     * and then resizes this cropped image to the dimensions specified in <code>targetWidth,targetHeight</code>.
+     *
+     * Should the target image rectangle be outside of the source image, the source image is enlarged and
+     * the given background replace color is used for the additional pixels.<p>
+     *
      * The aspect ratio of the target image is not kept.<p>
-     * 
+     *
      * @param image the image to crop
      * @param x the x position where the crop starts
      * @param y the y position where the crop starts
      * @param width the width of the cropped area from the source image
      * @param height the height of the cropped area from the source image
-     * @param targetWidth the width of the target image  
-     * @param targetHeight the width of the target image 
-     * @param backgroundColor the color to use if the background must be enlarged 
-     * 
-     * @return a cropped part of the given image from the specified <code>x,y</code> point 
-     *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code> 
-     *      
+     * @param targetWidth the width of the target image
+     * @param targetHeight the width of the target image
+     * @param backgroundColor the color to use if the background must be enlarged
+     *
+     * @return a cropped part of the given image from the specified <code>x,y</code> point
+     *      to the given <code>width,height</code>, resized to the dimensions specified in <code>targetWidth,targetHeight</code>
+     *
      * @see #cropToSize(BufferedImage, int, int, int, int, int, int)
      */
     public BufferedImage cropToSize(
@@ -692,13 +794,13 @@ public class Simapi {
 
     /**
      * Returns the byte contents of the given image.<p>
-     * 
+     *
      * @param image the image to get the byte contents for
      * @param type the type of the image to get the byte contents for
-     * 
+     *
      * @return the byte contents of the given image
-     * 
-     * @throws IOException in case the image could not be converted to bytes 
+     *
+     * @throws IOException in case the image could not be converted to bytes
      */
     public byte[] getBytes(BufferedImage image, String type) throws IOException {
 
@@ -709,11 +811,11 @@ public class Simapi {
 
     /**
      * Reduces the colors in the given image to the given maximum color number.<p>
-     *  
+     *
      * @param image the image to reduce the colors from
      * @param maxColors the maximum number of allowed colors in the output image (usually 256)
      * @param alphaToBitmask indicates if alpha information should be converted
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage reduceColors(BufferedImage image, int maxColors, boolean alphaToBitmask) {
@@ -723,11 +825,11 @@ public class Simapi {
 
     /**
      * Resizes an image according to the width and height specified.<p>
-     * 
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(BufferedImage image, int width, int height) {
@@ -738,15 +840,15 @@ public class Simapi {
     /**
      * Resizes an image according to the width and height specified,
      * keeping the aspect ratio if required.<p>
-     * 
+     *
      * If set to <code>true</code>, the bestfit option will keep the image within the dimensions specified
      * without losing the aspect ratio.<p>
-     * 
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
      * @param bestfit if true, the aspect ratio of the image will be kept
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit) {
@@ -757,19 +859,19 @@ public class Simapi {
     /**
      * Resizes an image according to the width and height specified,
      * keeping the aspect ratio if required.<p>
-     * 
+     *
      * If set to <code>true</code>, the bestfit option will keep the image within the dimensions specified
      * without losing the aspect ratio.<p>
-     * 
-     * If set to <code>false</code>, the blowup option will not enlarge an image that is already smaller 
+     *
+     * If set to <code>false</code>, the blowup option will not enlarge an image that is already smaller
      * then the sepcified target dimensions.<p>
-     * 
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
      * @param bestfit if true, the aspect ratio of the image will be kept
      * @param blowup if false, smaller images will not be enlarged to fit in the target dimensions
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(BufferedImage image, int width, int height, boolean bestfit, boolean blowup) {
@@ -810,15 +912,15 @@ public class Simapi {
 
     /**
      * Resizes the given image to best fit into the given dimensions (only if it does not already
-     * fit in the dimensions), placing the scaled image 
-     * at the indicated position on a background with the given color. 
-     * 
+     * fit in the dimensions), placing the scaled image
+     * at the indicated position on a background with the given color.
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
      * @param backgroundColor the background color to use
      * @param position the position to place the scaled image at
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(BufferedImage image, int width, int height, Color backgroundColor, int position) {
@@ -828,16 +930,16 @@ public class Simapi {
 
     /**
      * Resizes the given image to best fit into the given dimensions (only if it does not already
-     * fit in the dimensions), placing the scaled image 
-     * at the indicated position on a background with the given color. 
-     * 
+     * fit in the dimensions), placing the scaled image
+     * at the indicated position on a background with the given color.
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
      * @param backgroundColor the background color to use
      * @param position the position to place the scaled image at
      * @param blowup if false, smaller images will not be enlarged to fit in the target dimensions
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(
@@ -936,16 +1038,16 @@ public class Simapi {
 
     /**
      * Resizes an image according to the width and height specified,
-     * cropping the image along the sides in case the required height and width can not be reached without 
+     * cropping the image along the sides in case the required height and width can not be reached without
      * changing the apsect ratio of the image.<p>
-     * 
+     *
      * Use the constants <code>{@link Simapi#POS_CENTER}</code> etc. to indicate the crop position.<p>
-     * 
+     *
      * @param image the image to resize
      * @param width the width of the target image
      * @param height the height of the target image
      * @param position the position to place the cropped image at
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage resize(BufferedImage image, int width, int height, int position) {
@@ -985,13 +1087,13 @@ public class Simapi {
 
     /**
      * Scales an image according to the given scale factor.<p>
-     * 
+     *
      * If the scale is 2.0, the result image will be twice as large as the original,
      * if the scale is 0.5, the result image will be half as large as the original.<p>
-     * 
+     *
      * @param image the image to scale
      * @param scale the scale factor
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage scale(BufferedImage image, float scale) {
@@ -1001,11 +1103,11 @@ public class Simapi {
 
     /**
      * Scale the image with different ratios along the width and height.<p>
-     * 
+     *
      * @param image the image to scale
      * @param widthScale the scale factor for the width
      * @param heightScale the scale factor for the height
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage scale(BufferedImage image, float widthScale, float heightScale) {
@@ -1018,16 +1120,16 @@ public class Simapi {
 
     /**
      * Scale the image with different ratios along the width and height to the given target dimensions.<p>
-     * 
-     * Giving both scale factor and target dimensions is required to avoid rounding errors that 
+     *
+     * Giving both scale factor and target dimensions is required to avoid rounding errors that
      * lead to the "missing line" issue.<p>
-     * 
+     *
      * @param image the image to scale
      * @param widthScale the scale factor for the width
      * @param heightScale the scale factor for the height
      * @param targetWidth the width of the target image
      * @param targetHeight the height of the target image
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage scale(
@@ -1058,14 +1160,14 @@ public class Simapi {
             double factor = ((1 / widthScale) + (1 / heightScale)) / 2.0;
             int average = (image.getWidth() + image.getHeight()) / 2;
             if (((factor < 10.0) && (average < 1000))) {
-                // image is quite small and suitable factor - use gaussian blur 
+                // image is quite small and suitable factor - use gaussian blur
                 GaussianFilter gauss = new GaussianFilter();
-                double radius = Math.sqrt(1.5 * factor);
+                double radius = Math.sqrt(1.5 * factor * m_renderSettings.getBlurFactor());
                 gauss.setRadius((float)radius);
                 image = gauss.filter(image, null);
             } else {
                 // image is rather large, use much faster box blur
-                double root = Math.sqrt(0.75 * factor);
+                double root = Math.sqrt(0.75 * factor * m_renderSettings.getBlurFactor());
                 int radius;
                 if ((factor < 3.5) || (pixel > m_renderSettings.getMaximumBlurSize())) {
                     // this is a rather small scale factor, use Math.floor() or image might get blurry
@@ -1088,11 +1190,11 @@ public class Simapi {
 
     /**
      * Scale the image to the width and height to the given target dimensions.<p>
-     * 
+     *
      * @param image the image to scale
      * @param targetWidth the width of the target image
      * @param targetHeight the height of the target image
-     * 
+     *
      * @return the transformed image
      */
     public BufferedImage scale(BufferedImage image, int targetWidth, int targetHeight) {
@@ -1109,11 +1211,11 @@ public class Simapi {
 
     /**
      * Writes an image to a local file.<p>
-     * 
+     *
      * @param image the image to write
      * @param destination the destination file
      * @param type the type of the image to write
-     * 
+     *
      * @throws IOException in case the image could not be written
      */
     public void write(BufferedImage image, File destination, String type) throws IOException {
@@ -1123,11 +1225,11 @@ public class Simapi {
 
     /**
      * Writes an image to an output stream.<p>
-     * 
+     *
      * @param image the image to write
      * @param destination the output stream to write the image to
      * @param type the type of the image to write
-     * 
+     *
      * @throws IOException in case the image could not be written
      */
     public void write(BufferedImage image, OutputStream destination, String type) throws IOException {
@@ -1137,11 +1239,11 @@ public class Simapi {
 
     /**
      * Writes an image to a local file.<p>
-     * 
+     *
      * @param image the image to write
      * @param destination the destination file name
      * @param type the type of the image to write
-     * 
+     *
      * @throws IOException in case the image could not be written
      */
     public void write(BufferedImage image, String destination, String type) throws IOException {
@@ -1151,11 +1253,11 @@ public class Simapi {
 
     /**
      * Creates a buffered image that has the given dimensions and uses the given color model.<p>
-     * 
+     *
      * @param colorModel the color model to use
      * @param width the width of the image to create
      * @param height the height of the image to create
-     * 
+     *
      * @return a new image with the given dimensions and uses the given color model
      */
     protected BufferedImage createImage(ColorModel colorModel, int width, int height) {
@@ -1172,15 +1274,15 @@ public class Simapi {
 
     /**
      * Writes an image to the given output object, using the the given quality.<p>
-     * 
+     *
      * The <code>quality</code> is used only if the image <code>type</code> supports different qualities.
      * For example, this it is used when writing JPEG images.
-     * A quality of 0.1 is very poor, 0.75 is ok, 1.0 is maximum.<p> 
-     * 
+     * A quality of 0.1 is very poor, 0.75 is ok, 1.0 is maximum.<p>
+     *
      * @param im the image to write
      * @param output the destination to write the image to
      * @param formatName the type of the image to write
-     * 
+     *
      * @throws IOException in case the image could not be written
      */
     protected void write(BufferedImage im, Object output, String formatName) throws IOException {
@@ -1206,6 +1308,7 @@ public class Simapi {
         // make sure we have our exact constants to work with
         formatName = getImageType(formatName);
         if (formatName == null) {
+            stream.close();
             throw new IllegalArgumentException("no writers found for format '" + formatName + "'");
         }
 
@@ -1248,7 +1351,7 @@ public class Simapi {
     }
 
     /**
-     * Lower the current thread priority in order not to block other threads while image operations are performed.<p> 
+     * Lower the current thread priority in order not to block other threads while image operations are performed.<p>
      */
     private void threadSetNice() {
 
@@ -1264,7 +1367,7 @@ public class Simapi {
     }
 
     /**
-     * Set the current thread priority to normal.<p> 
+     * Set the current thread priority to normal.<p>
      */
     private void threadSetNormal() {
 

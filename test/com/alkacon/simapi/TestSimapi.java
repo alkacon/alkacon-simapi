@@ -13,7 +13,7 @@
  *
  * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,6 +30,7 @@ import com.alkacon.simapi.filter.RotateFilter;
 import com.alkacon.simapi.filter.ShadowFilter;
 
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -51,7 +52,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Default JUnit constructor.<p>
-     * 
+     *
      * @param params JUnit parameters
      */
     public TestSimapi(String params) {
@@ -61,7 +62,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Test suite for this test class.<p>
-     * 
+     *
      * @return the test suite
      */
     public static Test suite() {
@@ -72,6 +73,7 @@ public class TestSimapi extends VisualTestCase {
         suite.addTest(new TestSimapi("testCMYKJpeg"));
 
         suite.addTest(new TestSimapi("testSpecialScaleSize"));
+        suite.addTest(new TestSimapi("testCropPointToSize"));
 
         suite.addTest(new TestSimapi("testRead"));
         suite.addTest(new TestSimapi("testWriteGif"));
@@ -80,6 +82,7 @@ public class TestSimapi extends VisualTestCase {
 
         suite.addTest(new TestSimapi("testBadScaleQualityIssue"));
         suite.addTest(new TestSimapi("testBadScaleQualityIssue2"));
+        suite.addTest(new TestSimapi("testBadScaleQualityIssue3"));
         suite.addTest(new TestSimapi("testNotSharpEnoughIssue"));
 
         suite.addTest(new TestSimapi("testCrop"));
@@ -103,7 +106,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testBadScaleQualityIssue() throws Exception {
@@ -123,7 +126,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests "bad quality" issue encountered when scaling VERY large images to a small size.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testBadScaleQualityIssue2() throws Exception {
@@ -150,8 +153,28 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests "bad quality" issue encountered when scaling large images to a very small size.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    public void testBadScaleQualityIssue3() throws Exception {
+
+        RenderSettings rs = new RenderSettings(Simapi.RENDER_QUALITY_BICUBIC);
+        Simapi simapi = new Simapi(rs);
+
+        BufferedImage img1 = Simapi.read(getClass().getResource("funke_case.jpg"));
+        img1 = simapi.resize(img1, 1024, 768, Color.RED, Simapi.POS_CENTER);
+
+        File baseDir = new File(getClass().getResource("funke_case.jpg").getPath()).getParentFile();
+        simapi.write(img1, new File(baseDir, "w_funke_case.jpg"), Simapi.TYPE_JPEG);
+        img1 = Simapi.read(getClass().getResource("w_funke_case.jpg"));
+
+        checkImage(new BufferedImage[] {img1}, "Is the quality ok?");
+    }
+
+    /**
      * Tests reading / scaling / writing a CMYK JPEG image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testCMYKJpeg() throws Exception {
@@ -226,7 +249,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests cropping an image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testCrop() throws Exception {
@@ -265,8 +288,51 @@ public class TestSimapi extends VisualTestCase {
     }
 
     /**
+     * Tests cropping an image with a given middle point.<p>
+     *
+     * @throws Exception if the test fails
+     */
+    public void testCropPointToSize() throws Exception {
+
+        Simapi simapi = new Simapi();
+        BufferedImage img1, result1;
+
+        img1 = Simapi.read(getClass().getResource("Messdiener_sml.jpg"));
+        result1 = simapi.cropPointToSize(img1, 360, 234, false, 100, 200);
+        checkImage(new BufferedImage[] {drawCross(img1, 360, 234), result1}, "Has it been cropped around the point?");
+
+        result1 = simapi.cropPointToSize(img1, 360, 234, true, 100, 200);
+        checkImage(
+            new BufferedImage[] {drawCross(img1, 360, 234), result1},
+            "Has it been cropped around the point and downscaled?");
+
+        result1 = simapi.cropPointToSize(img1, 461, 506, false, 200, 100);
+        checkImage(
+            new BufferedImage[] {drawCross(img1, 461, 506), result1},
+            "Has it been cropped around the point with offset?");
+
+        img1 = Simapi.read(getClass().getResource("CMYK-p2.jpg"));
+        result1 = simapi.cropPointToSize(img1, 93, 154, true, 500, 150);
+        checkImage(
+            new BufferedImage[] {drawCross(img1, 93, 154), result1},
+            "Has it been cropped around the point and upscaled?");
+
+        img1 = Simapi.read(getClass().getResource("CMYK-p4.jpg"));
+        result1 = simapi.cropPointToSize(img1, 291, 420, true, 200, 200);
+        checkImage(
+            new BufferedImage[] {drawCross(img1, 291, 420), result1},
+            "Has it been cropped around the point and downscaled?");
+
+        img1 = Simapi.read(getClass().getResource("_3_tn.jpg"));
+        result1 = simapi.cropPointToSize(img1, 57, 50, true, 200, 200);
+        checkImage(
+            new BufferedImage[] {drawCross(img1, 57, 50), result1},
+            "Has it been cropped around the point and downscaled?");
+    }
+
+    /**
      * Tests writing an image as JPEG with different quality settings.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testFilters() throws Exception {
@@ -279,9 +345,9 @@ public class TestSimapi extends VisualTestCase {
         //      // Java standard metadata extraction - no Exif info is read from file
         //      ImageInputStream stream = ImageIO.createImageInputStream(input);
         //      Iterator iter = ImageIO.getImageReaders(stream);
-        //      ImageReader reader = (ImageReader)iter.next();                
+        //      ImageReader reader = (ImageReader)iter.next();
         //      ImageReadParam param = reader.getDefaultReadParam();
-        //      reader.setInput(stream, true, true);        
+        //      reader.setInput(stream, true, true);
         //      IIOMetadata meta = reader.getImageMetadata(0);
         //      if (meta != null) {
         //          String formats[] = meta.getMetadataFormatNames();
@@ -294,14 +360,14 @@ public class TestSimapi extends VisualTestCase {
         //              DOMSource source = new DOMSource(metaData);
         //              StreamResult sr = new StreamResult(System.out);
         //              transformer.transform(source, sr);
-        //          }            
+        //          }
         //      } else {
         //          System.out.println("meta is null");
-        //      }        
+        //      }
         //      BufferedImage img0 = reader.read(0, param);
         //      stream.close();
         //      reader.dispose();
-        //    
+        //
 
         //      Metadata metadata = JpegMetadataReader.readMetadata(input);
         //      // iterate through metadata directories
@@ -318,7 +384,7 @@ public class TestSimapi extends VisualTestCase {
         //      }
 
         /* TODO: Writing of Exif information
-         * 
+         *
          * Libary for Exif extraction AND writing (but only with Java 1.5):
          * http://mediachest.sourceforge.net/mediautil/
          */
@@ -392,12 +458,12 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests an issue with JDK 6 and GIF image processing.<p>
-     * 
-     * In a JDK 6 a GIF writer has been introduced. While this is 
-     * great in general, we already have our own implementation. Actually it appears that 
-     * the JDK default writer has an issue or at least behaves differently when scaling images 
+     *
+     * In a JDK 6 a GIF writer has been introduced. While this is
+     * great in general, we already have our own implementation. Actually it appears that
+     * the JDK default writer has an issue or at least behaves differently when scaling images
      * that contain transparent pixels.
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testGIFProcessing() throws Exception {
@@ -422,7 +488,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests image cropping.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testImageCropping() throws Exception {
@@ -461,7 +527,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests "not sharp enough" issue encountered when scaling large images to a very small size.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testNotSharpEnoughIssue() throws Exception {
@@ -500,7 +566,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests reading an image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testRead() throws Exception {
@@ -514,7 +580,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests cropping and resizing an image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testResizeCrop() throws Exception {
@@ -542,7 +608,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests resizing and scaling an image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testResizeScale() throws Exception {
@@ -624,7 +690,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests resizing/scaling and filling an image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testResizeScaleFill() throws Exception {
@@ -660,7 +726,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests resizing/scaling and filling a small image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testResizeScaleFillSmall() throws Exception {
@@ -696,7 +762,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests resizing a transparent image.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testScaleTransparent() throws Exception {
@@ -795,7 +861,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests the speed of the scaling.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testScalingSpeed() throws Exception {
@@ -827,12 +893,13 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests an issue with JDK 5 or 6 and GIF image processing.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testScreenShotScaling() throws Exception {
 
-        Simapi simapi = new Simapi();
+        RenderSettings settings = new RenderSettings(Simapi.RENDER_QUALITY_SOFT);
+        Simapi simapi = new Simapi(settings);
         BufferedImage result;
 
         File input = new File(getClass().getResource("screen_1024.png").getPath());
@@ -850,7 +917,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests an issue the setup wizard would not show image processing capabilities.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testSetupWizardIssue() throws Exception {
@@ -884,7 +951,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests "slow scaling" issue encountered with some JPEG's.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testSlowScalingIssue() throws Exception {
@@ -927,7 +994,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests an issue with certain scale sizes not working.<p>
-     * 
+     *
      *  @throws Exception if the test fails
      */
     public void testSpecialScaleSize() throws Exception {
@@ -950,7 +1017,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests writing an image as GIF.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testWriteGif() throws Exception {
@@ -981,7 +1048,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests writing an image as JPEG and PNG.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testWriteJpegAndPng() throws Exception {
@@ -1014,7 +1081,7 @@ public class TestSimapi extends VisualTestCase {
 
     /**
      * Tests writing an image as JPEG with different quality settings.<p>
-     * 
+     *
      * @throws Exception if the test fails
      */
     public void testWriteJpegQuality() throws Exception {
@@ -1040,5 +1107,25 @@ public class TestSimapi extends VisualTestCase {
         simapi.write(img1, destination, Simapi.TYPE_JPEG);
         read = Simapi.read(destination);
         checkImage(new BufferedImage[] {img1, read}, "Has it been written to disk as JPEG in a _high_ quality version?");
+    }
+
+    /**
+     * Draws a cross at a specific image point.<p>
+     *
+     * @param image the image
+     * @param x horizontal middle point of the cross
+     * @param y vertical middle point of the cross
+     *
+     * @return the image with the cross drawn at x,y
+     */
+    protected BufferedImage drawCross(BufferedImage image, int x, int y) {
+
+        Graphics2D g = image.createGraphics();
+
+        g.setColor(Color.RED);
+        g.drawLine(x - 5, y, x + 5, y);
+        g.drawLine(x, y - 5, x, y + 5);
+
+        return image;
     }
 }
