@@ -17,7 +17,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Renders an identity icon calculated from the given initialization String.<p>
  *
- * Default size of the icon is 40x40 pixel.
+ * Default size of the icon is 32x32 pixel.
  * The icons are generated from a grid of 4x4 patches.<p>
  *
  * This is intended to be used for generating individual icons for uses bases on their
@@ -34,10 +34,10 @@ import java.security.NoSuchAlgorithmException;
 public class IdentIcon {
 
     /** Salt String for generation better hashes. */
-    public static final String IDENTICON_SALT = "§,$/()&%./?-#&";
+    public static final String IDENTICON_SALT = "(§!$/%.&#?@-_)";
 
     /** Size of te individual patch when drawing. */
-    private static final float DEFAULT_PATCH_SIZE = 20.0f;
+    private static final float DEFAULT_PATCH_SIZE = 16.0f;
 
     /**
      * Grid size of the patches is 5x5.
@@ -235,10 +235,10 @@ public class IdentIcon {
     /** The calculated patch shapes / polygons. */
     private GeneralPath[] m_patchShapes;
 
-    /** Size of the individual patch, default is 20. */
+    /** Size of the individual patch, default is 16. */
     private float m_patchSize;
 
-    /** Target size for the rendered patch, default is 40. */
+    /** Target size for the rendered patch, default is 32. */
     private int m_size;
 
     /**
@@ -248,7 +248,7 @@ public class IdentIcon {
 
         setPatchSize(DEFAULT_PATCH_SIZE);
         setBackgroundColor(Color.WHITE);
-        setSize(40);
+        setSize(32);
         setReservedColor(null);
 
         try {
@@ -326,7 +326,7 @@ public class IdentIcon {
     }
 
     /**
-     * Returns the target image size (height, width) for the rendered patch, default is 40.<p>
+     * Returns the target image size (height, width) for the rendered patch, default is 32.<p>
      *
      * @return the target image size (height, width) for the rendered patch
      */
@@ -437,8 +437,8 @@ public class IdentIcon {
      * Set the size in pixels at which each patch will be rendered before they
      * are scaled down to requested identicon size.<p>
      *
-     * Default size is 20 pixels which means, for 16-block identicon,
-     * a 80x80 image will be rendered and scaled down.
+     * Default size is 16 pixels which means, for 16-block identicon,
+     * a 64x64 image will be rendered and scaled down.
      *
      * @param size patch size in pixels
      */
@@ -491,7 +491,7 @@ public class IdentIcon {
     }
 
     /**
-     * Sets the target image size (height, width) for the rendered patch, default is 40.<p>
+     * Sets the target image size (height, width) for the rendered patch, default is 32.<p>
      *
      * @param size the target image size to set
      */

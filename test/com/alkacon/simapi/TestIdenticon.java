@@ -58,6 +58,7 @@ public class TestIdenticon extends VisualTestCase {
         suite.addTest(new TestIdenticon("test4x4IdenticonVariability"));
         suite.addTest(new TestIdenticon("test4x4IdenticonReservedColor"));
         suite.addTest(new TestIdenticon("test4x4IdenticonSizes"));
+        suite.addTest(new TestIdenticon("test4x4IdenticonDefaultIcons"));
 
         TestSetup wrapper = new TestSetup(suite);
         return wrapper;
@@ -87,6 +88,28 @@ public class TestIdenticon extends VisualTestCase {
     }
 
     /**
+     * Tests 4x4 identicon default icons generated for the "standard" users.<p>
+     *
+     *  @throws Exception if the test fails
+     */
+    public void test4x4IdenticonDefaultIcons() throws Exception {
+
+        IdentIcon renderer = new IdentIcon();
+        renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
+
+        BufferedImage icon1 = renderer.render("Admintrue", true, 96);
+        BufferedImage icon1a = renderer.render("Admintrue", true, 32);
+        BufferedImage icon2 = renderer.render("Guestfalse", 96);
+        BufferedImage icon3 = renderer.render("editorfalse", 32);
+        BufferedImage icon4 = renderer.render("authorfalse", 32);
+        BufferedImage icon5 = renderer.render("templatorfalse", 32);
+
+        checkImage(
+            new BufferedImage[] {icon1, icon1a, icon2, icon3, icon4, icon5},
+            "4x4 default identicon generation ok?");
+    }
+
+    /**
      * Tests 4x4 identicon reserved color match.<p>
      *
      *  @throws Exception if the test fails
@@ -95,7 +118,7 @@ public class TestIdenticon extends VisualTestCase {
 
         IdentIcon renderer = new IdentIcon();
         renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
-        renderer.setSize(80);
+        renderer.setSize(64);
         renderer.setBackgroundColor(Color.LIGHT_GRAY);
         BufferedImage icon1 = renderer.render("ia", true);
         BufferedImage icon2 = renderer.render("hb", 0xff, 0xc8, 0x46);
@@ -120,6 +143,7 @@ public class TestIdenticon extends VisualTestCase {
     public void test4x4IdenticonSizes() throws Exception {
 
         IdentIcon renderer = new IdentIcon();
+        renderer.setPatchSize(20.0f);
         renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
 
         BufferedImage icon1 = renderer.render("ccc", 20);

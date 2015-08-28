@@ -202,6 +202,9 @@ public class Simapi {
 
     }
 
+    /** Static QUALITY renderer used by some public static methods. */
+    private static Simapi STATIC_QUALITY_RENDERER = new Simapi();
+
     /**
      * Creates a new simapi instance using the default render settings ({@link #RENDER_QUALITY}).<p>     *
      */
@@ -218,6 +221,21 @@ public class Simapi {
     public Simapi(RenderSettings renderSettings) {
 
         m_renderSettings = renderSettings;
+    }
+
+    /**
+     * Returns the byte contents of the given image, based on the QUALITY settings.<p>
+     *
+     * @param image the image to get the byte contents for
+     * @param type the type of the image to get the byte contents for
+     *
+     * @return the byte contents of the given image
+     *
+     * @throws IOException in case the image could not be converted to bytes
+     */
+    public static byte[] getImageBytes(BufferedImage image, String type) throws IOException {
+
+        return STATIC_QUALITY_RENDERER.getBytes(image, type);
     }
 
     /**
