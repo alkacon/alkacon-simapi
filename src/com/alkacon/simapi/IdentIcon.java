@@ -1,6 +1,7 @@
 
 package com.alkacon.simapi;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -33,11 +34,14 @@ import java.security.NoSuchAlgorithmException;
  */
 public class IdentIcon {
 
+    /** Constant to identify a transparent background fill color. */
+    public static final Color COLOR_TRANSPARENT = new Color(255, 255, 255, 0);
+
+    /** Size of the individual patch when drawing. */
+    private static final float DEFAULT_PATCH_SIZE = 16.0f;
+
     /** Salt String for generation better hashes. */
     public static final String IDENTICON_SALT = "(§!$/%.&#?@-_)";
-
-    /** Size of te individual patch when drawing. */
-    private static final float DEFAULT_PATCH_SIZE = 16.0f;
 
     /**
      * Grid size of the patches is 5x5.
@@ -247,7 +251,7 @@ public class IdentIcon {
     public IdentIcon() {
 
         setPatchSize(DEFAULT_PATCH_SIZE);
-        setBackgroundColor(Color.WHITE);
+        setBackgroundColor(COLOR_TRANSPARENT);
         setSize(32);
         setReservedColor(null);
 
@@ -257,33 +261,6 @@ public class IdentIcon {
             // should better not happen
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Method to draw a single shape, useful for visual testing the shape output.<p>
-     *
-     * @param shape the shape to draw
-     *
-     * @return a buffered image of the shape
-     */
-    public BufferedImage drawShape(int shape) {
-
-        int size = 60;
-        Color fill = new Color(0xb3, 0x1b, 0x34);
-        Color stroke = null;
-
-        BufferedImage targetImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = targetImage.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        g.setBackground(getBackgroundColor());
-        g.clearRect(0, 0, size, size);
-
-        drawPatch(g, 0, 0, size, shape, 0, false, fill, stroke);
-
-        g.dispose();
-
-        return targetImage;
     }
 
     /**
@@ -535,6 +512,7 @@ public class IdentIcon {
         float offset = size / 2.0f;
 
         // paint background
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC));
         g.setColor(invert ? fillColor : m_backgroundColor);
         g.fill(new Rectangle2D.Float(x, y, size, size));
 
@@ -556,6 +534,33 @@ public class IdentIcon {
         g.fill(shape);
 
         g.setTransform(savet);
+    }
+
+    /**
+     * Method to draw a single shape, useful for visual testing the shape output.<p>
+     *
+     * @param shape the shape to draw
+     *
+     * @return a buffered image of the shape
+     */
+    protected BufferedImage drawShape(int shape) {
+
+        int size = 60;
+        Color fill = new Color(0xb3, 0x1b, 0x34);
+        Color stroke = null;
+
+        BufferedImage targetImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = targetImage.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        g.setBackground(getBackgroundColor());
+        g.clearRect(0, 0, size, size);
+
+        drawPatch(g, 0, 0, size, shape, 0, false, fill, stroke);
+
+        g.dispose();
+
+        return targetImage;
     }
 
     /**
@@ -676,7 +681,7 @@ public class IdentIcon {
         // RENDER
         //
 
-        BufferedImage targetImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+        BufferedImage targetImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = targetImage.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 

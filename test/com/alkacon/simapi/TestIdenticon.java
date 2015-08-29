@@ -57,6 +57,7 @@ public class TestIdenticon extends VisualTestCase {
         suite.addTest(new TestIdenticon("test4x4Identicon"));
         suite.addTest(new TestIdenticon("test4x4IdenticonVariability"));
         suite.addTest(new TestIdenticon("test4x4IdenticonReservedColor"));
+        suite.addTest(new TestIdenticon("test4x4IdenticonBackgroundColor"));
         suite.addTest(new TestIdenticon("test4x4IdenticonSizes"));
         suite.addTest(new TestIdenticon("test4x4IdenticonDefaultIcons"));
 
@@ -85,6 +86,38 @@ public class TestIdenticon extends VisualTestCase {
         checkImage(
             new BufferedImage[] {icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, icon9},
             "4x4 identicon generation ok?");
+    }
+
+    /**
+     * Tests 4x4 identicon generation with different background colors.<p>
+     *
+     *  @throws Exception if the test fails
+     */
+    public void test4x4IdenticonBackgroundColor() throws Exception {
+
+        IdentIcon renderer = new IdentIcon();
+        renderer.setSize(96);
+        renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
+
+        // default transparent background
+        BufferedImage icon1 = renderer.render("xx");
+        // white background
+        renderer.setBackgroundColor(Color.WHITE);
+        BufferedImage icon2 = renderer.render("xx");
+        // black background
+        renderer.setBackgroundColor(Color.BLACK);
+        BufferedImage icon3 = renderer.render("xx");
+        // cyan background
+        renderer.setBackgroundColor(Color.CYAN);
+        BufferedImage icon4 = renderer.render("xx");
+        // transparent background with very light gray color, check stroke
+        renderer.setBackgroundColor(IdentIcon.COLOR_TRANSPARENT);
+        BufferedImage icon5 = renderer.render("xx", 0xfa, 0xfa, 0xfa);
+        // now white background with very light gray color, check stroke
+        renderer.setBackgroundColor(Color.WHITE);
+        BufferedImage icon6 = renderer.render("xx", 0xfa, 0xfa, 0xfa);
+
+        checkImage(new BufferedImage[] {icon1, icon2, icon3, icon4, icon5, icon6}, "Background colors ok?");
     }
 
     /**
@@ -119,7 +152,6 @@ public class TestIdenticon extends VisualTestCase {
         IdentIcon renderer = new IdentIcon();
         renderer.setReservedColor(new Color(0xff, 0xa8, 0x26));
         renderer.setSize(64);
-        renderer.setBackgroundColor(Color.LIGHT_GRAY);
         BufferedImage icon1 = renderer.render("ia", true);
         BufferedImage icon2 = renderer.render("hb", 0xff, 0xc8, 0x46);
         BufferedImage icon3 = renderer.render("gc", 0xdf, 0xc8, 0x46);
@@ -128,7 +160,7 @@ public class TestIdenticon extends VisualTestCase {
         BufferedImage icon6 = renderer.render("df", 0xbf, 0xd8, 0x66);
         BufferedImage icon7 = renderer.render("cg", 0xc0, 0xd8, 0x66);
         BufferedImage icon8 = renderer.render("bh", 0xff, 0xa8, 0x86);
-        BufferedImage icon9 = renderer.render("ai", 0xff, 0x48, 0x26);
+        BufferedImage icon9 = renderer.render("ai", 0xff, 0xa8, 0x26);
 
         checkImage(
             new BufferedImage[] {icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, icon9},
@@ -193,6 +225,7 @@ public class TestIdenticon extends VisualTestCase {
         int shapes = 32;
         BufferedImage[] results = new BufferedImage[shapes];
         IdentIcon renderer = new IdentIcon();
+        renderer.setBackgroundColor(Color.WHITE);
         for (int i = 0; i < shapes; i++) {
             results[i] = renderer.drawShape(i);
         }
