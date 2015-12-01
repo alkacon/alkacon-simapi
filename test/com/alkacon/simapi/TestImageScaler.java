@@ -55,6 +55,7 @@ public class TestImageScaler extends VisualTestCase {
         TestSuite suite = new TestSuite();
         suite.setName(TestImageScaler.class.getName());
 
+        suite.addTest(new TestImageScaler("testFrauGIssue"));
         suite.addTest(new TestImageScaler("testPointCroppingFromScaler"));
         suite.addTest(new TestImageScaler("testBlackImageIssue"));
         suite.addTest(new TestImageScaler("testMissingLineIssue"));
@@ -82,6 +83,25 @@ public class TestImageScaler extends VisualTestCase {
         BufferedImage img2 = Simapi.read(scaled);
 
         checkImage(new BufferedImage[] {img1, img2}, "Is the 'black image' issue solved?");
+    }
+
+    /**
+     * Tests an issue with image positioning not being set as expected in OpenCms 10 Alpha 2.<p>
+     *
+     *  @throws Exception if the test fails
+     */
+    public void testFrauGIssue() throws Exception {
+
+        File input = new File(getClass().getResource("frau-g.jpg").getPath());
+        byte[] imgBytes = readFile(input);
+        BufferedImage img1 = Simapi.read(imgBytes);
+
+        CmsImageScaler scaler = new CmsImageScaler();
+        scaler.parseParameters("cx:0,cy:29,cw:200,ch:121,w:455,h:275,t:2,c:transparent");
+        byte[] scaled = scaler.scaleImage(imgBytes, "frau-g-out.jpg");
+        BufferedImage img2 = Simapi.read(scaled);
+
+        checkImage(new BufferedImage[] {img1, img2}, "Is the image position as expected?");
     }
 
     /**
@@ -127,15 +147,17 @@ public class TestImageScaler extends VisualTestCase {
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped with transparent color intact using the scaler?");
 
-        scaler.parseParameters("cx:0,cy:0,cw:100,ch:100,w:200,h:200,c:#ff0000");
+        scaler.parseParameters("cx:0,cy:0,cw:140,ch:50,w:200,h:100,c:#ff0000");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
 
-        scaler.parseParameters("h:500,w:1000,cx:21,cy:15,ch:23,cw:1050,c:#00ff00");
+        scaler.parseParameters("h:500,w:1000,cx:0,cy:0,ch:50,cw:140,c:#00ff00");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
-        checkImage(new BufferedImage[] {result}, "Has it been cropped with red bg color using the scaler?");
+        checkImage(
+            new BufferedImage[] {result},
+            "Has it been cropped and enlarged with green bg color using the scaler?");
     }
 
     /**
@@ -176,21 +198,21 @@ public class TestImageScaler extends VisualTestCase {
         byte[] scaled;
         BufferedImage result;
 
-        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:2");
+        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:7");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(
             new BufferedImage[] {result},
             "Has it been cropped around the point with original pixels using the scaler?");
 
-        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:1");
+        scaler.parseParameters("cx:360,cy:234,cw:100,ch:200,t:6");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(
             new BufferedImage[] {result},
             "Has it been cropped around the point and downscaled using the scaler?");
 
-        scaler.parseParameters("cx:461,cy:506,cw:200,ch:100,t:2");
+        scaler.parseParameters("cx:461,cy:506,cw:200,ch:100,t:7");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(
@@ -199,14 +221,14 @@ public class TestImageScaler extends VisualTestCase {
 
         input = new File(getClass().getResource("CMYK-p2.jpg").getPath());
         imgBytes = readFile(input);
-        scaler.parseParameters("cx:93,cy:154,cw:500,ch:150,t:1");
+        scaler.parseParameters("cx:93,cy:154,cw:500,ch:150,t:6");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped around the point and upscaled using the scaler?");
 
         input = new File(getClass().getResource("CMYK-p4.jpg").getPath());
         imgBytes = readFile(input);
-        scaler.parseParameters("cx:291,cy:420,cw:200,ch:200,t:1");
+        scaler.parseParameters("cx:291,cy:420,cw:200,ch:200,t:6");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(
@@ -215,7 +237,7 @@ public class TestImageScaler extends VisualTestCase {
 
         input = new File(getClass().getResource("_3_tn.jpg").getPath());
         imgBytes = readFile(input);
-        scaler.parseParameters("cx:57,cy:50,cw:200,ch:200,t:1");
+        scaler.parseParameters("cx:57,cy:50,cw:200,ch:200,t:6");
         scaled = scaler.scaleImage(imgBytes, "/dummy.png");
         result = Simapi.read(scaled);
         checkImage(new BufferedImage[] {result}, "Has it been cropped around the point and upscaled using the scaler?");

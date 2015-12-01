@@ -140,9 +140,6 @@ public class Simapi {
     /** Constant to identify the <code>TIFF</code> image type. */
     public static final String TYPE_TIFF = "TIFF";
 
-    /** Rendering settings for the image generation / scaling / saving. */
-    private RenderSettings m_renderSettings;
-
     /**
      * Register the GIF encoder.<p>
      */
@@ -204,6 +201,9 @@ public class Simapi {
 
     /** Static QUALITY renderer used by some public static methods. */
     private static Simapi STATIC_QUALITY_RENDERER = new Simapi();
+
+    /** Rendering settings for the image generation / scaling / saving. */
+    private RenderSettings m_renderSettings;
 
     /**
      * Creates a new simapi instance using the default render settings ({@link #RENDER_QUALITY}).<p>     *
@@ -435,9 +435,10 @@ public class Simapi {
         }
 
         // recast the AWT image into a BufferedImage (using alpha RGB)
-        BufferedImage result = new BufferedImage(img.getWidth(null), img.getHeight(null), pg.getColorModel().hasAlpha()
-        ? BufferedImage.TYPE_INT_ARGB
-        : BufferedImage.TYPE_INT_RGB);
+        BufferedImage result = new BufferedImage(
+            img.getWidth(null),
+            img.getHeight(null),
+            pg.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
 
         // draw the generated image to the result canvas and return
         Graphics2D g = result.createGraphics();
@@ -642,6 +643,29 @@ public class Simapi {
                 g.fillRect(0, 0, result.getWidth(), result.getHeight());
             }
             g.drawImage(image, xpos, ypos, null);
+            g.dispose();
+            // exchange image with result
+            image = result;
+        } else if (backgroundColor != COLOR_TRANSPARENT) {
+            // background color provided
+            int imageWidth = image.getWidth();
+            int imageHeight = image.getHeight();
+
+            BufferedImage result = createImage(image.getColorModel(), imageWidth, imageHeight);
+            Graphics2D g = result.createGraphics();
+            // check the background color
+            ColorModel cm = result.getColorModel();
+            if (!cm.hasAlpha() && (backgroundColor == COLOR_TRANSPARENT)) {
+                // alpha not supported by target color model
+                backgroundColor = m_renderSettings.getTransparentReplaceColor();
+            }
+            if (backgroundColor != COLOR_TRANSPARENT) {
+                // don't fill if background is transparent
+                g.setPaintMode();
+                g.setColor(backgroundColor);
+                g.fillRect(0, 0, result.getWidth(), result.getHeight());
+            }
+            g.drawImage(image, x, y, null);
             g.dispose();
             // exchange image with result
             image = result;
