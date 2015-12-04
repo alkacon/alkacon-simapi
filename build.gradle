@@ -2,6 +2,9 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
+sourceCompatibility = java_target_version
+targetCompatibility = java_target_version
+
 repositories {
     mavenLocal()
     if (project.hasProperty('additional_repositories')){
@@ -46,7 +49,6 @@ jar {
 }
 
 javadoc {
-    options.addStringOption("sourcepath", "")
     project.configure(options) {
         memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
         charSet = "UTF-8"
@@ -55,6 +57,7 @@ javadoc {
         header = "<b>$product_name</b>"
         author = "true"
         use = "true"
+        source= java_target_version
     }
 }
 
@@ -190,4 +193,9 @@ install {
 tasks.withType(JavaCompile) {
     options.compilerArgs += ["-sourcepath", ""]
 }
-
+tasks.withType(Javadoc) {
+    options.addStringOption("sourcepath", "")
+    if (JavaVersion.current().isJava8Compatible()) {
+    	options.addStringOption("Xdoclint:none", "-quiet")
+    }
+}
