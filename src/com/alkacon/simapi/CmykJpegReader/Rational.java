@@ -38,7 +38,7 @@ package com.alkacon.simapi.CmykJpegReader;
  * Represents a rational number with a {@code long} numerator and {@code long} denominator.
  * Rational numbers are stored in reduced form with the sign stored with the numerator.
  * Rationals are immutable.
- * <p/>
+ * <p>
  * Adapted from sample code featured in
  * <a href="http://www.cs.princeton.edu/introcs/home/">"Intro to Programming in Java: An Interdisciplinary Approach" (Addison Wesley)</a>
  * by Robert Sedgewick and Kevin Wayne. Permission granted to redistribute under BSD license.

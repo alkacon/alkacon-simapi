@@ -180,7 +180,7 @@ public final class FileUtil {
      *         {@code false}. In all other cases, an
      *         {@code IOExceptio}n is thrown, and the method does not return.
      * @throws IOException if an i/o error occurs during copy
-     * @todo Test copyDir functionality!
+     * TODO: Test copyDir functionality!
      */
     public static boolean copy(File pFromFile, File pToFile, boolean pOverWrite) throws IOException {
 

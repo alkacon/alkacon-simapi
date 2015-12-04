@@ -40,10 +40,10 @@ import java.util.Properties;
 
 /**
  * A helper class for working with ICC color profiles and color spaces.
- * <p />
+ * <p>
  * Standard ICC color profiles are read from system-specific locations
  * for known operating systems.
- * <p />
+ * <p>
  * Color profiles may be configured by placing a property-file
  * {@code com/twelvemonkeys/imageio/color/icc_profiles.properties}
  * on the classpath, specifying the full path to the profile.
@@ -51,7 +51,7 @@ import java.util.Properties;
  * can be downloaded from
  * <a href="http://www.color.org/profiles2.xalter">ICC</a>,
  * <a href="http://www.adobe.com/downloads/">Adobe</a> or other places.
- * <p />
+ * <p>
  * Example property file:
  * <pre>
  * # icc_profiles.properties
@@ -141,7 +141,8 @@ public final class ColorSpaces {
                     ColorSpaces.class,
                     "com/twelvemonkeys/imageio/color/icc_profiles");
                 profiles.putAll(userOverrides);
-            } catch (IOException ignore) {}
+            } catch (IOException ignore) {
+            }
 
             if (DEBUG) {
                 System.out.println("User ICC profiles: " + profiles);
@@ -163,12 +164,13 @@ public final class ColorSpaces {
         private static final byte[] header = ICC_Profile.getInstance(ColorSpace.CS_sRGB).getData(ICC_Profile.icSigHead);
     }
 
-    private final static boolean DEBUG = "true".equalsIgnoreCase(System.getProperty("com.twelvemonkeys.imageio.color.debug"));
+    private final static boolean DEBUG = "true".equalsIgnoreCase(
+        System.getProperty("com.twelvemonkeys.imageio.color.debug"));
 
     // OpenJDK 7 seems to handle non-perceptual rendering intents gracefully, so we don't need to fiddle with the profiles.
     // However, the later Oracle distribute JDK seems to include the color management code that has the known bugs...
-    private final static boolean JDK_HANDLES_RENDERING_INTENTS = SystemUtil.isClassAvailable("java.lang.invoke.CallSite")
-        && !SystemUtil.isClassAvailable("sun.java2d.cmm.kcms.CMM");
+    private final static boolean JDK_HANDLES_RENDERING_INTENTS = SystemUtil.isClassAvailable(
+        "java.lang.invoke.CallSite") && !SystemUtil.isClassAvailable("sun.java2d.cmm.kcms.CMM");
 
     /** The Adobe RGB 1998 (or compatible) color space. Either read from disk or built-in. */
     public static final int CS_ADOBE_RGB_1998 = 5000;
@@ -193,7 +195,7 @@ public final class ColorSpaces {
 
     /**
      * Creates an ICC color space from the given ICC color profile.
-     * <p />
+     * <p>
      * For standard Java color spaces, the built-in instance is returned.
      * Otherwise, color spaces are looked up from cache and created on demand.
      *
@@ -246,7 +248,7 @@ public final class ColorSpaces {
 
     /**
      * Returns the color space specified by the given color space constant.
-     * <p />
+     * <p>
      * For standard Java color spaces, the built-in instance is returned.
      * Otherwise, color spaces are looked up from cache and created on demand.
      *
@@ -335,7 +337,7 @@ public final class ColorSpaces {
 
     /**
      * Tests whether an ICC color profile is known to cause problems for {@link java.awt.image.ColorConvertOp}.
-     * <p />
+     * <p>
      * <em>
      * Note that this method only tests if a color conversion using this profile is known to fail.
      * There's no guarantee that the color conversion will succeed even if this method returns {@code false}.

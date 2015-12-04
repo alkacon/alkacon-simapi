@@ -72,60 +72,54 @@ import java.awt.image.WritableRaster;
  * Several different interpolation algorithms may be specifed in the
  * constructor, either using the
  * <a href="#field_summary">filter type constants</a>, or one of the
- * {@code RendereingHints}.
- * <p/>
+ * {@code RendereingHints}.<p>
+ *
  * For fastest results, use {@link #FILTER_POINT} or {@link #FILTER_BOX}.
  * In most cases, {@link #FILTER_TRIANGLE} will produce acceptable results, while
  * being relatively fast.
  * For higher quality output, use more sophisticated interpolation algorithms,
- * like {@link #FILTER_MITCHELL} or {@link #FILTER_LANCZOS}.
- * <p/>
+ * like {@link #FILTER_MITCHELL} or {@link #FILTER_LANCZOS}.<p>
+ *
  * Example:
  * <blockquote><pre>
  * BufferedImage image;
- * <p/>
  * //...
- * <p/>
  * ResampleOp resampler = new ResampleOp(100, 100, ResampleOp.FILTER_TRIANGLE);
  * BufferedImage thumbnail = resampler.filter(image, null);
- * </pre></blockquote>
- * <p/>
+ * </pre></blockquote><p>
+ *
  * If your imput image is very large, it's possible to first resample using the
  * very fast {@code FILTER_POINT} algorithm, then resample to the wanted size,
  * using a higher quality algorithm:
  * <blockquote><pre>
  * BufferedImage verylLarge;
- * <p/>
  * //...
- * <p/>
  * int w = 300;
  * int h = 200;
- * <p/>
  * BufferedImage temp = new ResampleOp(w * 2, h * 2, FILTER_POINT).filter(verylLarge, null);
- * <p/>
  * BufferedImage scaled = new ResampleOp(w, h).filter(temp, null);
- * </pre></blockquote>
- * <p/>
+ * </pre></blockquote><p>
  * For maximum performance, this class will use native code, through
  * <a href="http://www.yeo.id.au/jmagick/">JMagick</a>, when available.
  * Otherwise, the class will silently fall back to pure Java mode.
  * Native code may be disabled globally, by setting the system property
  * {@code com.twelvemonkeys.image.accel} to {@code false}.
  * To allow debug of the native code, set the system property
- * {@code com.twelvemonkeys.image.magick.debug} to {@code true}.
- * <p/>
+ * {@code com.twelvemonkeys.image.magick.debug} to {@code true}.<p>
+ *
  * This {@code BufferedImageOp} is based on C example code found in
  * <a href="http://www.acm.org/tog/GraphicsGems/">Graphics Gems III</a>,
  * Filtered Image Rescaling, by Dale Schumacher (with additional improvments by
- * Ray Gardener).
+ * Ray Gardener).<p>
+ *
  * Additional changes are inspired by
  * <a href="http://www.imagemagick.org/">ImageMagick</a> and
  * Marco Schmidt's <a href="http://schmidt.devlib.org/jiu/">Java Imaging Utilities</a>
- * (which are also adaptions of the same original code from Graphics Gems III).
- * <p/>
+ * (which are also adaptions of the same original code from Graphics Gems III).<p>
+ *
  * For a description of the various interpolation algorithms, see
  * <em>General Filtered Image Rescaling</em> in <em>Graphics Gems III</em>,
- * Academic Press, 1994.
+ * Academic Press, 1994.<p>
  *
  * @author <a href="mailto:harald.kuhr@gmail.com">Harald Kuhr</a>
  * @author last modified by $Author: haku $
@@ -137,7 +131,7 @@ import java.awt.image.WritableRaster;
  * @see AffineTransformOp
  */
 // TODO: Consider using AffineTransformOp for more operations!?
-public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
+public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */ {
 
     // NOTE: These MUST correspond to ImageMagick filter types, for the
     // MagickAccelerator to work consistently (see magick.FilterType).
@@ -250,7 +244,7 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
     static class CubicFilter implements InterpolationFilter {
 
         // AKA B-Spline
-        public final double filter(double t)/* box (*) box (*) box (*) box */{
+        public final double filter(double t)/* box (*) box (*) box (*) box */ {
 
             final double tt;
 
@@ -355,11 +349,13 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
             name = pName;
         }
 
+        @Override
         public boolean isCompatibleValue(Object pValue) {
 
             return (pValue instanceof Value) && ((Value)pValue).isCompatibleKey(this);
         }
 
+        @Override
         public String toString() {
 
             return name;
@@ -425,7 +421,7 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
     static class QuadraticFilter implements InterpolationFilter {
 
         // AKA Bell
-        public final double filter(double t)/* box (*) box (*) box */{
+        public final double filter(double t)/* box (*) box (*) box */ {
 
             if (t < 0) {
                 t = -t;
@@ -492,6 +488,7 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
             return pKey == key;
         }
 
+        @Override
         public String toString() {
 
             return name;
@@ -784,14 +781,6 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
         "Blackman-Sinc",
         FILTER_BLACKMAN_SINC);
 
-    // Member variables
-    // Package access, to allow access from MagickAccelerator
-    int width;
-
-    int height;
-
-    int filterType;
-
     private final static double B = 1.0 / 3.0;
 
     private final static double C = 1.0 / 3.0;
@@ -801,10 +790,18 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
     private final static double P2 = (-18.0 + (12.0 * B) + (6.0 * C)) / 6.0;
 
     private final static double P3 = (12.0 - (9.0 * B) - (6.0 * C)) / 6.0;
+
     private final static double Q0 = ((8.0 * B) + (24.0 * C)) / 6.0;
+
     private final static double Q1 = ((-12.0 * B) - (48.0 * C)) / 6.0;
+
     private final static double Q2 = ((6.0 * B) + (30.0 * C)) / 6.0;
     private final static double Q3 = ((-1.0 * B) - (6.0 * C)) / 6.0;
+    // Member variables
+    // Package access, to allow access from MagickAccelerator
+    int width;
+    int height;
+    int filterType;
 
     /**
      * Creates a {@code ResampleOp} that will resample input images to the
@@ -850,7 +847,6 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
      * standard {@code java.awt} hints, and dictates interpolation
      * directly, see
      * <a href="#field_summary">{@code RenderingHints} constants</a>.</li>
-     * <p/>
      * <li>{@code KEY_INTERPOLATION} takes precedence over other hints.
      * <ul>
      * <li>{@link RenderingHints#VALUE_INTERPOLATION_NEAREST_NEIGHBOR} specifies
@@ -861,7 +857,6 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
      * {@code FILTER_QUADRATIC}</li>
      * </ul>
      * </li>
-     * <p/>
      * <li>{@code KEY_RENDERING} or {@code KEY_COLOR_RENDERING}
      * <ul>
      * <li>{@link RenderingHints#VALUE_RENDER_SPEED} specifies
@@ -901,7 +896,8 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
             return p * j1(t);
         }
         q = Math.sqrt(2.0 / (Math.PI * t))
-            * ((p1(t) * ((1.0 / Math.sqrt(2.0)) * (Math.sin(t) - Math.cos(t)))) - ((8.0 / t) * q1(t) * ((-1.0 / Math.sqrt(2.0)) * (Math.sin(t) + Math.cos(t)))));
+            * ((p1(t) * ((1.0 / Math.sqrt(2.0)) * (Math.sin(t) - Math.cos(t))))
+                - ((8.0 / t) * q1(t) * ((-1.0 / Math.sqrt(2.0)) * (Math.sin(t) + Math.cos(t)))));
         if (p < 0.0) {
             q = -q;
         }
@@ -1085,8 +1081,12 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
                 throw new IllegalArgumentException(value + " incompatible with key " + KEY_RESAMPLE_INTERPOLATION);
             }
             return value != null ? ((Value)value).getFilterType() : FILTER_UNDEFINED;
-        } else if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(pHints.get(RenderingHints.KEY_INTERPOLATION))
-            || (!pHints.containsKey(RenderingHints.KEY_INTERPOLATION) && (RenderingHints.VALUE_RENDER_SPEED.equals(pHints.get(RenderingHints.KEY_RENDERING)) || RenderingHints.VALUE_COLOR_RENDER_SPEED.equals(pHints.get(RenderingHints.KEY_COLOR_RENDERING))))) {
+        } else if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(
+            pHints.get(RenderingHints.KEY_INTERPOLATION))
+            || (!pHints.containsKey(RenderingHints.KEY_INTERPOLATION)
+                && (RenderingHints.VALUE_RENDER_SPEED.equals(pHints.get(RenderingHints.KEY_RENDERING))
+                    || RenderingHints.VALUE_COLOR_RENDER_SPEED.equals(
+                        pHints.get(RenderingHints.KEY_COLOR_RENDERING))))) {
             // Nearest neighbour, or prioritize speed
             return FILTER_POINT;
         } else if (RenderingHints.VALUE_INTERPOLATION_BILINEAR.equals(pHints.get(RenderingHints.KEY_INTERPOLATION))) {
@@ -1311,18 +1311,18 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
             && (filterType != FILTER_BOX)
             && ((cm = input.getColorModel()) instanceof IndexColorModel)) {
             // TODO: OPTIMIZE: If color model has only b/w or gray, we could skip color info
-            temp = ImageUtil.toBuffered(input, cm.hasAlpha()
-            ? BufferedImage.TYPE_4BYTE_ABGR
-            : BufferedImage.TYPE_3BYTE_BGR);
+            temp = ImageUtil.toBuffered(
+                input,
+                cm.hasAlpha() ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_3BYTE_BGR);
         } else {
             temp = input;
         }
 
         // Create or convert output to a suitable image
         // TODO: OPTIMIZE: Don't really need to convert all types to same as input
-        result = (output != null) && (temp.getType() != BufferedImage.TYPE_CUSTOM) ? /*output*/ImageUtil.toBuffered(
-            output,
-            temp.getType()) : createCompatibleDestImage(temp, null);
+        result = (output != null) && (temp.getType() != BufferedImage.TYPE_CUSTOM)
+        ? /*output*/ImageUtil.toBuffered(output, temp.getType())
+        : createCompatibleDestImage(temp, null);
 
         resample(temp, result, filter);
 
@@ -1442,7 +1442,12 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
 
         Returns -1 if error, 0 otherwise.
     */
-    private ContributorList calcXContrib(double xscale, double fwidth, int srcwidth, InterpolationFilter pFilter, int i) {
+    private ContributorList calcXContrib(
+        double xscale,
+        double fwidth,
+        int srcwidth,
+        InterpolationFilter pFilter,
+        int i) {
 
         // TODO: What to do when fwidth > srcwidyj or dstwidth
 
@@ -1708,7 +1713,7 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
                     work.setSample(0, k, channel, weight);
 
                 }
-            }/* next row in temp column */
+            } /* next row in temp column */
 
             /* The temp column has been built. Now stretch it vertically into dst column. */
             for (int i = 0; i < dstHeight; i++) {
@@ -1736,8 +1741,8 @@ public class ResampleOp implements BufferedImageOp/* TODO: RasterOp */{
 
                     out.setSample(xx, i, channel, weight);
                 }
-            }/* next dst row */
-        }/* next dst column */
+            } /* next dst row */
+        } /* next dst column */
         return pDest;
     }/* resample */
 }

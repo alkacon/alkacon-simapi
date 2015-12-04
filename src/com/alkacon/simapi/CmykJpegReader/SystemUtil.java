@@ -46,7 +46,7 @@ import java.util.Properties;
 
 /**
  * A utility class with some useful system-related functions.
- * <p/>
+ * <p>
  * <em>NOTE: This class is not considered part of the public API and may be
  * changed without notice</em>
  *
@@ -338,8 +338,8 @@ public final class SystemUtil {
      * @see java.lang.ClassLoader#getResourceAsStream
      * @see java.lang.ClassLoader#getSystemResourceAsStream
      *
-     * @todo Reconsider ever using the System ClassLoader: http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
-     * @todo Consider using Context Classloader instead?
+     * TODO: Reconsider ever using the System ClassLoader: http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
+     * TODO: Consider using Context Classloader instead?
      */
     public static Properties loadProperties(Class pClass, String pName) throws IOException {
 

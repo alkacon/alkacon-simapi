@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * A JPEG {@code ImageReader} implementation based on the JRE {@code JPEGImageReader},
  * that adds support and properly handles cases where the JRE version throws exceptions.
- * <p/>
+ * <p>
  * Main features:
  * <ul>
  * <li>Support for YCbCr JPEGs without JFIF segment (converted to RGB, using the embedded ICC profile if applicable)</li>

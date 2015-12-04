@@ -50,10 +50,10 @@ import java.io.UTFDataFormatException;
  * A little endian input stream reads two's complement,
  * little endian integers, floating point numbers, and characters
  * and returns them as Java primitive types.
- * <p/>
+ * <p>
  * The standard {@code java.io.DataInputStream} class
  * which this class imitates reads big endian quantities.
- * <p/>
+ * <p>
  * <em>Warning:
  * <!-- Beware of little indians! -->
  * The {@code DataInput} and {@code DataOutput} interfaces
@@ -63,7 +63,6 @@ import java.io.UTFDataFormatException;
  * specify the byte order of their underlying representations.
  * </em>
  *
- * @see com.twelvemonkeys.io.LittleEndianRandomAccessFile
  * @see java.io.DataInputStream
  * @see java.io.DataInput
  * @see java.io.DataOutput
@@ -177,7 +176,7 @@ public class LittleEndianDataInputStream extends FilterInputStream implements Da
     /**
      * See the general contract of the {@code readFully}
      * method of {@code DataInput}.
-     * <p/>
+     * <p>
      * Bytes
      * for this operation are read from the contained
      * input stream.
@@ -196,7 +195,7 @@ public class LittleEndianDataInputStream extends FilterInputStream implements Da
     /**
      * See the general contract of the {@code readFully}
      * method of {@code DataInput}.
-     * <p/>
+     * <p>
      * Bytes
      * for this operation are read from the contained
      * input stream.
@@ -263,8 +262,8 @@ public class LittleEndianDataInputStream extends FilterInputStream implements Da
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.BufferedReader#readLine()
      * @see        java.io.DataInputStream#readLine()
-     * @noinspection deprecation
      */
+    @Deprecated
     public String readLine() throws IOException {
 
         DataInputStream ds = new DataInputStream(in);

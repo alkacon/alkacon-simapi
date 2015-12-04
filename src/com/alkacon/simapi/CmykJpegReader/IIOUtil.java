@@ -55,7 +55,7 @@ public final class IIOUtil {
 
     /**
      * Creates an {@code OutputStream} adapter that writes to an underlying {@code ImageOutputStream}.
-     * <p/>
+     * <p>
      * Note: The adapter is buffered, and <em>MUST</em> be properly flushed/closed after use,
      * otherwise data may be lost.
      *

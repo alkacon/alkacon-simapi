@@ -36,7 +36,7 @@ import java.awt.geom.AffineTransform;
 
 /**
  * An {@code Icon} implementation backed by a {@code BufferedImage}.
- * <p/>
+ * <p>
  *
  * @author <a href="mailto:harald.kuhr@gmail.com">Harald Kuhr</a>
  * @version $Id: //depot/branches/personal/haraldk/twelvemonkeys/release-2/twelvemonkeys-core/src/main/java/com/twelvemonkeys/image/BufferedImageIcon.java#2 $

@@ -25,11 +25,11 @@ import java.security.NoSuchAlgorithmException;
  * unique user name / OU combination.
  *
  * Based on the original Identicon implementation of Don Park,
- * see {@link "https://github.com/donpark/identicon"}.
+ * see <a href="https://github.com/donpark/identicon">https://github.com/donpark/identicon</a>.<p>
  *
  * Original copyright notice:
  * <pre>
- * Copyright (c) 2007-2012 Don Park <donpark@docuverse.com>
+ * Copyright (c) 2007-2012 Don Park &lt;donpark@docuverse.com&gt;
  * </pre>
  */
 public class IdentIcon {

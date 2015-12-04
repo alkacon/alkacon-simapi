@@ -28,11 +28,11 @@
 
 package com.alkacon.simapi.CmykJpegReader;
 
-import java.awt.image.*;
+import java.awt.image.RGBImageFilter;
 
 /**
  * This class can convert a color image to grayscale.
- * <P/>
+ * <p>
  * Uses ITU standard conversion: (222 * Red + 707 * Green + 71 * Blue) / 1000.
  *
  * @author <a href="mailto:harald.kuhr@gmail.com">Harald Kuhr</a>
@@ -62,7 +62,7 @@ public class GrayFilter extends RGBImageFilter {
      * pLow and pHigh.
      *
      * @param pLow float in the range  0..1
-     * @param pHigh float in the range 0..1 and >= pLow
+     * @param pHigh float in the range 0..1 and &gt;= pLow
      */
     public GrayFilter(float pLow, float pHigh) {
         if (pLow > pHigh) {
@@ -71,18 +71,16 @@ public class GrayFilter extends RGBImageFilter {
         // Make sure high and low are inside range
         if (pLow < 0f) {
             pLow = 0f;
-        }
-        else if (pLow > 1f) {
+        } else if (pLow > 1f) {
             pLow = 1f;
         }
         if (pHigh < 0f) {
             pHigh = 0f;
-        }
-        else if (pHigh > 1f) {
+        } else if (pHigh > 1f) {
             pHigh = 1f;
         }
 
-        low = (int) (pLow * 255f);
+        low = (int)(pLow * 255f);
         range = pHigh - pLow;
 
     }
@@ -92,7 +90,7 @@ public class GrayFilter extends RGBImageFilter {
      * range between pLow and pHigh.
      *
      * @param pLow integer in the range 0..255
-     * @param pHigh inteeger in the range 0..255 and >= pLow
+     * @param pHigh inteeger in the range 0..255 and &gt;= pLow
      */
     public GrayFilter(int pLow, int pHigh) {
         this(pLow / 255f, pHigh / 255f);
@@ -107,23 +105,25 @@ public class GrayFilter extends RGBImageFilter {
      *
      * @return the filtered pixel value in the default color space
      */
+    @Override
     public int filterRGB(int pX, int pY, int pARGB) {
+
         // Get color components
-        int r = pARGB >> 16 & 0xFF;
-        int g = pARGB >>  8 & 0xFF;
-        int b = pARGB       & 0xFF;
+        int r = (pARGB >> 16) & 0xFF;
+        int g = (pARGB >> 8) & 0xFF;
+        int b = pARGB & 0xFF;
 
         // ITU standard:  Gray scale=(222*Red+707*Green+71*Blue)/1000
-        int gray = (222 * r + 707 * g + 71 * b) / 1000;
+        int gray = ((222 * r) + (707 * g) + (71 * b)) / 1000;
 
         //int gray = (int) ((float) (r + g + b) / 3.0f);
 
         if (range != 1.0f) {
             // Apply range
-            gray =  low + (int) (gray * range);
+            gray = low + (int)(gray * range);
         }
 
         // Return ARGB pixel
-        return  (pARGB & 0xFF000000) | (gray << 16) | (gray << 8) | gray;
+        return (pARGB & 0xFF000000) | (gray << 16) | (gray << 8) | gray;
     }
 }

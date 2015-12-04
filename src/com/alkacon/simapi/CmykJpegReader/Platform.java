@@ -197,7 +197,7 @@ public final class Platform {
 
     /**
      * Enumeration of common System {@code Architecture}s.
-     * <p/>
+     * <p>
      * For {@link #Unknown unknown architectures}, {@code toString()} will return
      * the the same value as {@code System.getProperty("os.arch")}.
      *
@@ -226,7 +226,7 @@ public final class Platform {
 
     /**
      * Enumeration of common {@code OperatingSystem}s.
-     * <p/>
+     * <p>
      * For {@link #Unknown unknown operating systems}, {@code getName()} will return
      * the the same value as {@code System.getProperty("os.name")}.
      *

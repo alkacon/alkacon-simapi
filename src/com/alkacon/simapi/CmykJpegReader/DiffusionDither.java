@@ -1,7 +1,7 @@
+
 package com.alkacon.simapi.CmykJpegReader;
 
-
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -16,20 +16,20 @@ import java.util.Random;
 /**
  * This {@code BufferedImageOp/RasterOp} implements basic
  * Floyd-Steinberg error-diffusion algorithm for dithering.
- * <P/>
+ * <p>
  * The weights used are 7/16, 3/16, 5/16 and 1/16, distributed like this:
  * <!-- - -
  *  | |x|7|
  *  - - - -
  *  |3|5|1|
  *   - - -->
- * <P/>
- * <TABLE border="1" cellpadding="4" cellspacing="0">
- *  <TR><TD bgcolor="#000000">&nbsp;</TD><TD class="TableHeadingColor"
+ * <p>
+ * <TABLE border="1" cellpadding="4" cellspacing="0" summary="">
+ *  <TR><TD>&nbsp;</TD><TD class="TableHeadingColor"
  *          align="center">X</TD><TD>7/16</TD></TR>
  *  <TR><TD>3/16</TD><TD>5/16</TD><TD>1/16</TD></TR>
  * </TABLE>
- * <P/>
+ * <p>
  * See <A href="http://www.awprofessional.com/bookstore/product.asp?isbn=0201848406&rl=1">Computer Graphics (Foley et al.)</a>
  * for more information.
  *
@@ -47,6 +47,16 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
     private boolean alternateScans = true;
 
     /**
+     * Creates a {@code DiffusionDither}, with no fixed
+     * {@code IndexColorModel}. The color model will be generated for each
+     * filtering, unless the destination image already has an
+     * {@code IndexColorModel}.
+     */
+    public DiffusionDither() {
+        this(null);
+    }
+
+    /**
      * Creates a {@code DiffusionDither}, using the given
      * {@code IndexColorModel} for dithering into.
      *
@@ -58,25 +68,32 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
     }
 
     /**
-     * Creates a {@code DiffusionDither}, with no fixed
-     * {@code IndexColorModel}. The color model will be generated for each
-     * filtering, unless the destination image already has an
-     * {@code IndexColorModel}.
+     * Converts a int triplet to int ARGB.
      */
-    public DiffusionDither() {
-        this(null);
+    private static int toIntARGB(int[] pRGB) {
+
+        return 0xff000000 // All opaque
+            | (pRGB[0] << 16)
+            | (pRGB[1] << 8)
+            | (pRGB[2]);
+        /*
+          | ((int) (pRGB[0] << 16) & 0x00ff0000)
+          | ((int) (pRGB[1] <<  8) & 0x0000ff00)
+          | ((int) (pRGB[2]      ) & 0x000000ff);
+        */
     }
 
     /**
-     * Sets the scan mode. If the parameter is true, error distribution for
-     * every even line will be left-to-right, while odd lines will be
-     * right-to-left.
-     * The default is {@code true}.
-     *
-     * @param pUse {@code true} if scan mode should be alternating left/right
+     * Converts an int ARGB to int triplet.
      */
-    public void setAlternateScans(boolean pUse) {
-        alternateScans = pUse;
+    private static int[] toRGBArray(int pARGB, int[] pBuffer) {
+
+        pBuffer[0] = ((pARGB & 0x00ff0000) >> 16);
+        pBuffer[1] = ((pARGB & 0x0000ff00) >> 8);
+        pBuffer[2] = ((pARGB & 0x000000ff));
+        //pBuffer[3] = ((pARGB & 0xff000000) >> 24); // alpha
+
+        return pBuffer;
     }
 
     /**
@@ -89,17 +106,20 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * an instance of {@code IndexColorModel}.
      */
     public final BufferedImage createCompatibleDestImage(BufferedImage pSource, ColorModel pDestCM) {
+
         if (pDestCM == null) {
-            return new BufferedImage(pSource.getWidth(), pSource.getHeight(),
-                                     BufferedImage.TYPE_BYTE_INDEXED,
-                                     getICM(pSource));
-        }
-        else if (pDestCM instanceof IndexColorModel) {
-            return new BufferedImage(pSource.getWidth(), pSource.getHeight(),
-                                     BufferedImage.TYPE_BYTE_INDEXED,
-                                     (IndexColorModel) pDestCM);
-        }
-        else {
+            return new BufferedImage(
+                pSource.getWidth(),
+                pSource.getHeight(),
+                BufferedImage.TYPE_BYTE_INDEXED,
+                getICM(pSource));
+        } else if (pDestCM instanceof IndexColorModel) {
+            return new BufferedImage(
+                pSource.getWidth(),
+                pSource.getHeight(),
+                BufferedImage.TYPE_BYTE_INDEXED,
+                (IndexColorModel)pDestCM);
+        } else {
             throw new ImageFilterException("Only IndexColorModel allowed.");
         }
     }
@@ -113,6 +133,7 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * @return a {@code WritableRaster}
      */
     public final WritableRaster createCompatibleDestRaster(Raster pSrc) {
+
         return createCompatibleDestRaster(pSrc, getICM(pSrc));
     }
 
@@ -125,94 +146,9 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * @return a {@code WritableRaster}
      */
     public final WritableRaster createCompatibleDestRaster(Raster pSrc, IndexColorModel pIndexColorModel) {
+
         return pIndexColorModel.createCompatibleWritableRaster(pSrc.getWidth(), pSrc.getHeight());
     }
-
-
-    /**
-     * Returns the bounding box of the filtered destination image.  Since
-     * this is not a geometric operation, the bounding box does not
-     * change.
-     * @param pSrc the {@code BufferedImage} to be filtered
-     * @return the bounds of the filtered definition image.
-     */
-    public final Rectangle2D getBounds2D(BufferedImage pSrc) {
-        return getBounds2D(pSrc.getRaster());
-    }
-
-    /**
-     * Returns the bounding box of the filtered destination Raster.  Since
-     * this is not a geometric operation, the bounding box does not
-     * change.
-     * @param pSrc the {@code Raster} to be filtered
-     * @return the bounds of the filtered definition {@code Raster}.
-     */
-    public final Rectangle2D getBounds2D(Raster pSrc) {
-        return pSrc.getBounds();
-    }
-
-    /**
-     * Returns the location of the destination point given a
-     * point in the source.  If {@code dstPt} is not
-     * {@code null}, it will be used to hold the return value.
-     * Since this is not a geometric operation, the {@code srcPt}
-     * will equal the {@code dstPt}.
-     * @param pSrcPt a {@code Point2D} that represents a point
-     *        in the source image
-     * @param pDstPt a {@code Point2D}that represents the location
-     *        in the destination
-     * @return the {@code Point2D} in the destination that
-     *         corresponds to the specified point in the source.
-     */
-    public final Point2D getPoint2D(Point2D pSrcPt, Point2D pDstPt) {
-        // Create new Point, if needed
-        if (pDstPt == null) {
-            pDstPt = new Point2D.Float();
-        }
-
-        // Copy location
-        pDstPt.setLocation(pSrcPt.getX(), pSrcPt.getY());
-
-        // Return dest
-        return pDstPt;
-    }
-
-    /**
-     * Returns the rendering mHints for this op.
-     * @return the {@code RenderingHints} object associated
-     *         with this op.
-     */
-    public final RenderingHints getRenderingHints() {
-        return null;
-    }
-
-    /**
-     * Converts an int ARGB to int triplet.
-     */
-    private static int[] toRGBArray(int pARGB, int[] pBuffer) {
-        pBuffer[0] = ((pARGB & 0x00ff0000) >> 16);
-        pBuffer[1] = ((pARGB & 0x0000ff00) >> 8);
-        pBuffer[2] = ((pARGB & 0x000000ff));
-        //pBuffer[3] = ((pARGB & 0xff000000) >> 24); // alpha
-
-        return pBuffer;
-    }
-
-    /**
-     * Converts a int triplet to int ARGB.
-     */
-    private static int toIntARGB(int[] pRGB) {
-        return 0xff000000 // All opaque
-                | (pRGB[0] << 16)
-                | (pRGB[1] << 8)
-                | (pRGB[2]);
-        /*
-          | ((int) (pRGB[0] << 16) & 0x00ff0000)
-          | ((int) (pRGB[1] <<  8) & 0x0000ff00)
-          | ((int) (pRGB[2]      ) & 0x000000ff);
-        */
-    }
-
 
     /**
      * Performs a single-input/single-output dither operation, applying basic
@@ -225,16 +161,16 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * {@code null}.
      */
     public final BufferedImage filter(BufferedImage pSource, BufferedImage pDest) {
+
         // Create destination image, if none provided
         if (pDest == null) {
             pDest = createCompatibleDestImage(pSource, getICM(pSource));
-        }
-        else if (!(pDest.getColorModel() instanceof IndexColorModel)) {
+        } else if (!(pDest.getColorModel() instanceof IndexColorModel)) {
             throw new ImageFilterException("Only IndexColorModel allowed.");
         }
 
         // Filter rasters
-        filter(pSource.getRaster(), pDest.getRaster(), (IndexColorModel) pDest.getColorModel());
+        filter(pSource.getRaster(), pDest.getRaster(), (IndexColorModel)pDest.getColorModel());
 
         return pDest;
     }
@@ -250,21 +186,8 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * {@code null}.
      */
     public final WritableRaster filter(final Raster pSource, WritableRaster pDest) {
+
         return filter(pSource, pDest, getICM(pSource));
-    }
-
-    private IndexColorModel getICM(BufferedImage pSource) {
-        return (indexColorModel != null ? indexColorModel : IndexImage.getIndexColorModel(pSource, 256, IndexImage.TRANSPARENCY_BITMASK));
-    }
-    private IndexColorModel getICM(Raster pSource) {
-        return (indexColorModel != null ? indexColorModel : createIndexColorModel(pSource));
-    }
-
-    private IndexColorModel createIndexColorModel(Raster pSource) {
-        BufferedImage image = new BufferedImage(pSource.getWidth(), pSource.getHeight(),
-                                                BufferedImage.TYPE_INT_ARGB);
-        image.setData(pSource);
-        return IndexImage.getIndexColorModel(image, 256, IndexImage.TRANSPARENCY_BITMASK);
     }
 
     /**
@@ -279,6 +202,7 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
      * {@code null}.
      */
     public final WritableRaster filter(final Raster pSource, WritableRaster pDest, IndexColorModel pColorModel) {
+
         int width = pSource.getWidth();
         int height = pSource.getHeight();
 
@@ -296,7 +220,7 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
         int[][] nextErr = new int[width + 2][3];
 
         // Random errors in [-1 .. 1] - for first row
-        for (int i = 0; i < width + 2; i++) {
+        for (int i = 0; i < (width + 2); i++) {
             // Note: This is broken for the strange cases where nextInt returns Integer.MIN_VALUE
             currErr[i][0] = RANDOM.nextInt(FS_SCALE * 2) - FS_SCALE;
             currErr[i][1] = RANDOM.nextInt(FS_SCALE * 2) - FS_SCALE;
@@ -325,13 +249,12 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
             if (forward) {
                 x = 0;
                 limit = width;
-            }
-            else {
+            } else {
                 x = width - 1;
                 limit = -1;
             }
 
-            // TODO: Use getPixels instead of getPixel for better performance?            
+            // TODO: Use getPixels instead of getPixel for better performance?
 
             // Loop over row
             while (true) {
@@ -348,8 +271,7 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
                     // Clamp
                     if (inRGB[i] > 255) {
                         inRGB[i] = 255;
-                    }
-                    else if (inRGB[i] < 0) {
+                    } else if (inRGB[i] < 0) {
                         inRGB[i] = 0;
                     }
                 }
@@ -408,8 +330,7 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
                         break;
                     }
 
-                }
-                else {
+                } else {
                     // Row 1 (y)
                     // Update error in this pixel (x - 1)
                     currErr[x][0] += diff[0] * 7;
@@ -456,5 +377,98 @@ public class DiffusionDither implements BufferedImageOp, RasterOp {
         }
 
         return pDest;
+    }
+
+    /**
+     * Returns the bounding box of the filtered destination image.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     * @param pSrc the {@code BufferedImage} to be filtered
+     * @return the bounds of the filtered definition image.
+     */
+    public final Rectangle2D getBounds2D(BufferedImage pSrc) {
+
+        return getBounds2D(pSrc.getRaster());
+    }
+
+    /**
+     * Returns the bounding box of the filtered destination Raster.  Since
+     * this is not a geometric operation, the bounding box does not
+     * change.
+     * @param pSrc the {@code Raster} to be filtered
+     * @return the bounds of the filtered definition {@code Raster}.
+     */
+    public final Rectangle2D getBounds2D(Raster pSrc) {
+
+        return pSrc.getBounds();
+    }
+
+    /**
+     * Returns the location of the destination point given a
+     * point in the source.  If {@code dstPt} is not
+     * {@code null}, it will be used to hold the return value.
+     * Since this is not a geometric operation, the {@code srcPt}
+     * will equal the {@code dstPt}.
+     * @param pSrcPt a {@code Point2D} that represents a point
+     *        in the source image
+     * @param pDstPt a {@code Point2D}that represents the location
+     *        in the destination
+     * @return the {@code Point2D} in the destination that
+     *         corresponds to the specified point in the source.
+     */
+    public final Point2D getPoint2D(Point2D pSrcPt, Point2D pDstPt) {
+
+        // Create new Point, if needed
+        if (pDstPt == null) {
+            pDstPt = new Point2D.Float();
+        }
+
+        // Copy location
+        pDstPt.setLocation(pSrcPt.getX(), pSrcPt.getY());
+
+        // Return dest
+        return pDstPt;
+    }
+
+    /**
+     * Returns the rendering mHints for this op.
+     * @return the {@code RenderingHints} object associated
+     *         with this op.
+     */
+    public final RenderingHints getRenderingHints() {
+
+        return null;
+    }
+
+    /**
+     * Sets the scan mode. If the parameter is true, error distribution for
+     * every even line will be left-to-right, while odd lines will be
+     * right-to-left.
+     * The default is {@code true}.
+     *
+     * @param pUse {@code true} if scan mode should be alternating left/right
+     */
+    public void setAlternateScans(boolean pUse) {
+
+        alternateScans = pUse;
+    }
+
+    private IndexColorModel createIndexColorModel(Raster pSource) {
+
+        BufferedImage image = new BufferedImage(pSource.getWidth(), pSource.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        image.setData(pSource);
+        return IndexImage.getIndexColorModel(image, 256, IndexImage.TRANSPARENCY_BITMASK);
+    }
+
+    private IndexColorModel getICM(BufferedImage pSource) {
+
+        return (indexColorModel != null
+        ? indexColorModel
+        : IndexImage.getIndexColorModel(pSource, 256, IndexImage.TRANSPARENCY_BITMASK));
+    }
+
+    private IndexColorModel getICM(Raster pSource) {
+
+        return (indexColorModel != null ? indexColorModel : createIndexColorModel(pSource));
     }
 }

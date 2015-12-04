@@ -35,7 +35,7 @@ import java.io.InputStream;
 
 /**
  * IIOInputStreamAdapter
- * <p/>
+ * <p>
  * Note: You should always wrap this stream in a {@code BufferedInputStream}.
  * If not, performance may degrade significantly.
 *

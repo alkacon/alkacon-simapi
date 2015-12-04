@@ -36,7 +36,7 @@ import java.io.ByteArrayInputStream;
 /**
  * An unsynchronized {@code ByteArrayOutputStream} implementation. This version
  * also has a constructor that lets you create a stream with initial content.
- * <p/>
+ * <p>
  *
  * @author <a href="mailto:harald.kuhr@gmail.com">Harald Kuhr</a>
  * @version $Id: FastByteArrayOutputStream.java#2 $
@@ -58,7 +58,7 @@ public final class FastByteArrayOutputStream extends ByteArrayOutputStream {
 
     /**
      * Creates a {@code ByteArrayOutputStream} with the given initial content.
-     * <p/>
+     * <p>
      * Note that the buffer is not cloned, for maximum performance.
      *
      * @param pBuffer initial buffer
@@ -121,7 +121,7 @@ public final class FastByteArrayOutputStream extends ByteArrayOutputStream {
      * Creates a {@code ByteArrayInputStream} that reads directly from this
      * {@code FastByteArrayOutputStream}'s byte buffer.
      * The buffer is not cloned, for maximum performance.
-     * <p/>
+     * <p>
      * Note that care needs to be taken to avoid writes to
      * this output stream after the input stream is created.
      * Failing to do so, may result in unpredictable behaviour.

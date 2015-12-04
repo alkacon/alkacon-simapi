@@ -31,7 +31,7 @@ package com.alkacon.simapi.CmykJpegReader;
 /**
  * Inverse Colormap to provide efficient lookup of any given input color
  * to the closest match to the given color map.
- * <p/>
+ * <p>
  * Based on "Efficient Inverse Color Map Computation" by Spencer W. Thomas
  * in "Graphics Gems Volume II"
  *

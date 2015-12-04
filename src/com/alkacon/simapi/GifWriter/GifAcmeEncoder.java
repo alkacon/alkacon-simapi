@@ -17,7 +17,7 @@
  *
  * For further information about Alkacon Software GmbH, please see the
  * company website: http://www.alkacon.com
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -30,21 +30,21 @@ import java.awt.image.IndexColorModel;
 import java.io.DataOutput;
 import java.io.IOException;
 
-/**  
- * GifEncoder - writes out an image as a GIF.
+/**
+ * GifEncoder - writes out an image as a GIF.<p>
  *
- * Transparency handling and variable bit size courtesy of Jack Palevich.
+ * Transparency handling and variable bit size courtesy of Jack Palevich.<p>
  *
- * Copyright (C) 1996 by Jef Poskanzer <jef@acme.com>.  All rights reserved.
+ * Copyright (C) 1996 by Jef Poskanzer &lt;jef@acme.com&gt;.  All rights reserved.<p>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:
+ * are met:<p>
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.<p>
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    documentation and/or other materials provided with the distribution.<p>
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -56,14 +56,14 @@ import java.io.IOException;
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * SUCH DAMAGE.<p>
  *
  * Visit the ACME Labs Java page for up-to-date versions of this and other
- * fine Java utilities: http://www.acme.com/java/
- * 
+ * fine Java utilities: http://www.acme.com/java/<p>
+ *
  * Adapted from ppmtogif, which is based on GIFENCOD by David
- * Rowley <mgardi@watdscu.waterloo.edu>. Lempel-Zim compression
- * based on "compress".
+ * Rowley &lt;mgardi@watdscu.waterloo.edu&gt;. Lempel-Zim compression
+ * based on "compress".<p>
  */
 public class GifAcmeEncoder {
 
@@ -136,11 +136,11 @@ public class GifAcmeEncoder {
     private int transparentPixel = -1; // hpm
     private int width, height;
 
-    /** 
+    /**
      * Constructs a new GifEncoder using an 8-bit BufferedImage Image.<p>
-     * 
+     *
      * The image color model needs to be of type {@link IndexColorModel}.<p>
-     * 
+     *
      * @param img the image to encode as GIF
      */
     public GifAcmeEncoder(BufferedImage img) {
@@ -184,11 +184,11 @@ public class GifAcmeEncoder {
     // file size for noticeable speed improvement on small files.  Please direct
     // questions about this implementation to ames!jaw.
 
-    /** 
+    /**
      * Saves the image as a GIF file to the given DataOutput.<p>
-     * 
+     *
      * @param out the output stream to save the image at
-     * 
+     *
      * @throws IOException in case the encoding fails
      */
     public void write(DataOutput out) throws IOException {

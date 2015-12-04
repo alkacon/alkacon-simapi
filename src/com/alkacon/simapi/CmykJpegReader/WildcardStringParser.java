@@ -33,30 +33,30 @@ import java.io.PrintStream;
 /**
  * This class parses arbitrary strings against a wildcard string mask provided.
  * The wildcard characters are '*' and '?'.
- * <p/>
+ * <p>
  * The string masks provided are treated as case sensitive.<br>
  * Null-valued string masks as well as null valued strings to be parsed, will lead to rejection.
- * <p/>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
+ * <p>
  * <i>This class is custom designed for wildcard string parsing and is several times faster than the implementation based on the Jakarta Regexp package.</i>
- * <p/>
+ * <p>
  * <p><hr style="height=1"><p>
- * <p/>
+ * <p>
  * This task is performed based on regular expression techniques.
  * The possibilities of string generation with the well-known wildcard characters stated above,
  * represent a subset of the possibilities of string generation with regular expressions.<br>
  * The '*' corresponds to ([Union of all characters in the alphabet])*<br>
  * The '?' corresponds to ([Union of all characters in the alphabet])<br>
  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<small>These expressions are not suited for textual representation at all, I must say. Is there any math tags included in HTML?</small>
- * <p/>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
+ * <p>
  * The complete meta-language for regular expressions are much larger.
  * This fact makes it fairly straightforward to build data structures for parsing because the amount of rules of building these structures are quite limited, as stated below.
- * <p/>
- * <p/>
- * <p/>
+ * <p>
+ * <p>
+ * <p>
  * To bring this over to mathematical terms:
  * The parser ia a <b>nondeterministic finite automaton</b> (latin) representing the <b>grammar</b> which is stated by the string mask.
  * The <b>language</b> accepted by this automaton is the set of all strings accepted by this automaton.<br>
@@ -90,9 +90,9 @@ import java.io.PrintStream;
  * Parsing faults must be reported to the author.
  * </small>
  * </ol>
- * <p/>
+ * <p>
  * <p><hr style="height=1"><p>
- * <p/>
+ * <p>
  * Examples of usage:<br>
  * This example will return "Accepted!".
  * <pre>
@@ -103,12 +103,12 @@ import java.io.PrintStream;
  *     System.out.println("Not accepted!");
  * }
  * </pre>
- * <p/>
+ * <p>
  * <p><hr style="height=1"><p>
- * <p/>
+ * <p>
  * Theories and concepts are based on the book <i>Elements of the Theory of Computation</i>, by Harry l. Lewis and Christos H. Papadimitriou, (c) 1981 by Prentice Hall.
- * <p/>
- * <p/>
+ * <p>
+ * <p>
  *
  * @author <a href="mailto:eirik.torske@iconmedialab.no">Eirik Torske</a>
  * @deprecated Will probably be removed in the near future
@@ -144,7 +144,7 @@ public class WildcardStringParser {
 
     /**
      * Creates a wildcard string parser.
-     * <p/>
+     * <p>
      *
      * @param pStringMask the wildcard string mask.
      */
@@ -154,7 +154,7 @@ public class WildcardStringParser {
 
     /**
      * Creates a wildcard string parser.
-     * <p/>
+     * <p>
      *
      * @param pStringMask the wildcard string mask.
      * @param pDebugging {@code true} will cause debug messages to be emitted to {@code System.out}.
@@ -165,7 +165,7 @@ public class WildcardStringParser {
 
     /**
      * Creates a wildcard string parser.
-     * <p/>
+     * <p>
      *
      * @param pStringMask the wildcard string mask.
      * @param pDebugging {@code true} will cause debug messages to be emitted.
@@ -311,7 +311,7 @@ public class WildcardStringParser {
 
     /**
      * Gets the string mask that was used when building the parser atomaton.
-     * <p/>
+     * <p>
      *
      * @return the string mask used for building the parser automaton.
      */
@@ -321,7 +321,7 @@ public class WildcardStringParser {
 
     /**
      * Parses a string according to the rules stated above.
-     * <p/>
+     * <p>
      *
      * @param pStringToParse the string to parse.
      * @return {@code true} if and only if the string are accepted by the automaton.

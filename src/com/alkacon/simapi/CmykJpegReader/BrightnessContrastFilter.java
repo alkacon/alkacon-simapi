@@ -30,17 +30,16 @@ package com.alkacon.simapi.CmykJpegReader;
 
 import java.awt.image.RGBImageFilter;
 
-
 /**
  * Adjusts the contrast and brightness of an image.
- * <p/>
+ * <p>
  * For brightness, the valid range is {@code -2.0,..,0.0,..,2.0}.
  * A value of {@code 0.0} means no change.
  * Negative values will make the pixels darker.
  * Maximum negative value ({@code -2}) will make all filtered pixels black.
  * Positive values will make the pixels brighter.
  * Maximum positive value ({@code 2}) will make all filtered pixels white.
- * <p/>
+ * <p>
  * For contrast, the valid range is {@code -1.0,..,0.0,..,1.0}.
  * A value of {@code 0.0} means no change.
  * Negative values will reduce contrast.
@@ -55,7 +54,7 @@ import java.awt.image.RGBImageFilter;
  *
  * @version $Id: //depot/branches/personal/haraldk/twelvemonkeys/release-2/twelvemonkeys-core/src/main/java/com/twelvemonkeys/image/BrightnessContrastFilter.java#1 $
  *
- * @todo consider doing something similar to http://archives.java.sun.com/cgi-bin/wa?A2=ind0302&L=jai-interest&F=&S=&P=15947
+ * TODO: consider doing something similar to http://archives.java.sun.com/cgi-bin/wa?A2=ind0302&amp;L=jai-interest&amp;F=&amp;S=&amp;P=15947
  */
 
 public class BrightnessContrastFilter extends RGBImageFilter {
@@ -74,7 +73,7 @@ public class BrightnessContrastFilter extends RGBImageFilter {
     /**
      * Creates a BrightnessContrastFilter with default values
      * ({@code brightness=0.3, contrast=0.3}).
-     * <p/>
+     * <p>
      * This will slightly increase both brightness and contrast.
      */
     public BrightnessContrastFilter() {
@@ -84,14 +83,14 @@ public class BrightnessContrastFilter extends RGBImageFilter {
     /**
      * Creates a BrightnessContrastFilter with the given values for brightness
      * and contrast.
-     * <p/>
+     * <p>
      * For brightness, the valid range is {@code -2.0,..,0.0,..,2.0}.
      * A value of {@code 0.0} means no change.
      * Negative values will make the pixels darker.
      * Maximum negative value ({@code -2}) will make all filtered pixels black.
      * Positive values will make the pixels brighter.
      * Maximum positive value ({@code 2}) will make all filtered pixels white.
-     * <p/>
+     * <p>
      * For contrast, the valid range is {@code -1.0,..,0.0,..,1.0}.
      * A value of {@code 0.0} means no change.
      * Negative values will reduce contrast.
@@ -110,7 +109,19 @@ public class BrightnessContrastFilter extends RGBImageFilter {
         LUT = createLUT(pBrightness, pContrast);
     }
 
+    private static int clamp(int i) {
+
+        if (i < 0) {
+            return 0;
+        }
+        if (i > 255) {
+            return 255;
+        }
+        return i;
+    }
+
     private static int[] createLUT(float pBrightness, float pContrast) {
+
         int[] lut = new int[256];
 
         // Hmmm.. This approximates Photoshop values.. Not good though..
@@ -120,7 +131,7 @@ public class BrightnessContrastFilter extends RGBImageFilter {
         double brightness = pBrightness + 1.0;
 
         for (int i = 0; i < 256; i++) {
-            lut[i] = clamp((int) (127.5 * brightness + (i - 127) * (contrast + 1.0)));
+            lut[i] = clamp((int)((127.5 * brightness) + ((i - 127) * (contrast + 1.0))));
         }
 
         // Special case, to ensure only primary colors for max contrast
@@ -129,16 +140,6 @@ public class BrightnessContrastFilter extends RGBImageFilter {
         }
 
         return lut;
-    }
-
-    private static int clamp(int i) {
-        if (i < 0) {
-            return 0;
-        }
-        if (i > 255) {
-            return 255;
-        }
-        return i;
     }
 
     /**
@@ -151,10 +152,12 @@ public class BrightnessContrastFilter extends RGBImageFilter {
      *
      * @return the filtered pixel value in the default color space
      */
+    @Override
     public int filterRGB(int pX, int pY, int pARGB) {
+
         // Get color components
-        int r = pARGB >> 16 & 0xFF;
-        int g = pARGB >> 8 & 0xFF;
+        int r = (pARGB >> 16) & 0xFF;
+        int g = (pARGB >> 8) & 0xFF;
         int b = pARGB & 0xFF;
 
         // Scale to new contrast
