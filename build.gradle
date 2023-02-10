@@ -30,12 +30,18 @@ apply from: 'dependencies.gradle'
 sourceSets{
     main {
         java.srcDir 'src'
-        resources.srcDir 'src'
+        resources {
+            srcDir 'src'
+            exclude '**/*.java'
+        }
     }
     
     test {
         java.srcDir 'test'
-        resources.srcDir 'test'
+        resources {
+            srcDir 'test'
+            exclude '**/*.java'
+        }
     }
 }
 
@@ -44,7 +50,6 @@ jar {
         attributes 'Implementation-Title': product_name,
         'Implementation-Version': version
     }
-    from (sourceSets.main.allSource){ include '**/*.java' }
     exclude '**/.gitignore'
 }
 
@@ -77,7 +82,7 @@ test {
     // important: exclude all anonymous classes
     exclude '**/*$*.class'
     scanForTestClasses false
-    testClassesDir = sourceSets.test.output.classesDir
+    testClassesDirs = sourceSets.test.output.classesDirs
     testLogging.showStandardStreams = true
     ignoreFailures true
 }
@@ -189,12 +194,7 @@ install {
     }
 }
 
-// fixed issue with libraries containing both .java and .class files
-tasks.withType(JavaCompile) {
-    options.compilerArgs += ["-sourcepath", ""]
-}
 tasks.withType(Javadoc) {
-    options.addStringOption("sourcepath", "")
     if (JavaVersion.current().isJava8Compatible()) {
     	options.addStringOption("Xdoclint:none", "-quiet")
     }
